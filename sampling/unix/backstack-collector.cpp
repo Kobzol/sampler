@@ -28,10 +28,32 @@ void BackstackCollector::collect()
         unw_get_proc_name(&cursor, nameBuffer, sizeof(nameBuffer), &offset);
 
         auto name = this->demangler.demangle(nameBuffer);
+        this->addSample(name, i == 0);
 
         if (unw_step(&cursor) < 0)
         {
             break;
         }
     }
+}
+
+void BackstackCollector::addSample(const std::string& name, bool own)
+{
+    auto it = this->functions.find(name);
+    if (it == this->functions.end())
+    {
+        it = this->functions.insert({ name, FunctionRecord(name) }).first;
+    }
+
+    it->second.samplesCumulative++;
+
+    if (own)
+    {
+        it->second.samplesOwn++;
+    }
+}
+
+const std::unordered_map<std::string, FunctionRecord> BackstackCollector::getFunctions() const
+{
+    return this->functions;
 }

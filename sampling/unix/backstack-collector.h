@@ -2,7 +2,10 @@
 
 #include <unistd.h>
 #include <cstdint>
+#include <unordered_map>
+
 #include "demangler.h"
+#include "../functionrecord.h"
 
 class BackstackCollector
 {
@@ -16,8 +19,13 @@ public:
 
     void collect();
 
+    const std::unordered_map<std::string, FunctionRecord> getFunctions() const;
+
 private:
+    void addSample(const std::string& name, bool own);
+
     Demangler demangler;
+    std::unordered_map<std::string, FunctionRecord> functions;
 
     void* context = nullptr;
     pid_t pid;

@@ -2,6 +2,7 @@ set(SOURCE_FILES
     sleeptimer.cpp
     task.cpp
     taskcontext.cpp
+    functionrecord.cpp
 )
 
 if (UNIX)
