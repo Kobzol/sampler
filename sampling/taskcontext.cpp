@@ -1,6 +1,6 @@
 #include "taskcontext.h"
 
-TaskContext::TaskContext(Task task, std::unique_ptr<BackstackCollector> collector)
+TaskContext::TaskContext(Task task, std::unique_ptr<StacktraceCollector> collector)
         : task(task), collector(std::move(collector))
 {
 
@@ -11,7 +11,7 @@ Task& TaskContext::getTask()
     return this->task;
 }
 
-BackstackCollector& TaskContext::getCollector()
+StacktraceCollector& TaskContext::getCollector()
 {
     return *this->collector;
 }

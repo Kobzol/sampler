@@ -1,6 +1,9 @@
 #include "sleeptimer.h"
-
-#include <unistd.h>
+#ifdef __linux__
+	#include <unistd.h>
+#elif _WIN32
+	#include <Windows.h>
+#endif
 
 Sleeptimer::Sleeptimer(uint32_t interval): interval(interval)
 {
@@ -19,6 +22,11 @@ void Sleeptimer::sleep()
 
     if (ms < this->interval)
     {
-        usleep(static_cast<unsigned int>(1000 * (this->interval - ms)));
+		size_t timeLeft = this->interval - ms;
+#ifdef __linux__
+        usleep(static_cast<unsigned int>(1000 * timeLeft));
+#elif _WIN32
+		Sleep(timeLeft);
+#endif
     }
 }

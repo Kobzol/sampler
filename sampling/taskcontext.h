@@ -3,17 +3,17 @@
 #include <memory>
 
 #include "task.h"
-#include "backstack-collector.h"
+#include "stacktrace-collector.h"
 
 class TaskContext
 {
 public:
-    explicit TaskContext(Task task, std::unique_ptr<BackstackCollector> collector);
+    explicit TaskContext(Task task, std::unique_ptr<StacktraceCollector> collector);
 
     Task& getTask();
-    BackstackCollector& getCollector();
+    StacktraceCollector& getCollector();
 
 private:
     Task task;
-    std::unique_ptr<BackstackCollector> collector;
+    std::unique_ptr<StacktraceCollector> collector;
 };

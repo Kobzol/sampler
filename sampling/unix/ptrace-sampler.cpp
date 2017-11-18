@@ -1,5 +1,6 @@
-#include "sampler.h"
+#include "PtraceSampler.h"
 #include "utility.h"
+#include "unwind-collector.h"
 #include "../taskcontext.h"
 #include "../sleeptimer.h"
 
@@ -90,12 +91,12 @@ static void consumeSignals(pid_t pid, const std::function<bool (int, int)>& call
 }
 
 
-Sampler::Sampler(uint32_t interval): interval(interval)
+PtraceSampler::PtraceSampler(uint32_t interval): Sampler(interval)
 {
 
 }
 
-void Sampler::connect(uint32_t pid)
+void PtraceSampler::connect(uint32_t pid)
 {
     assert(!this->running);
 
@@ -110,12 +111,12 @@ void Sampler::connect(uint32_t pid)
         this->loop();
     });
 }
-void Sampler::connect(const std::vector<std::string>& args)
+void PtraceSampler::connect(const std::vector<std::string>& args)
 {
     assert(!this->running);
 
     this->running.store(true);
-    this->loopThread = std::thread([this, args]()
+    this->loopThread = std::thread([this, &args]()
     {
         this->pid = fork();
         WRAP_ERROR(this->pid);
@@ -140,7 +141,7 @@ void Sampler::connect(const std::vector<std::string>& args)
     });
 }
 
-void Sampler::createTasks()
+void PtraceSampler::createTasks()
 {
     auto tasks = loadExistingTasks(this->pid);
     for (auto& task: tasks)
@@ -154,7 +155,7 @@ void Sampler::createTasks()
     }
 }
 
-void Sampler::loop()
+void PtraceSampler::loop()
 {
     Sleeptimer timer(this->interval);
     while (this->running && !this->activeTasks.empty())
@@ -201,7 +202,7 @@ void Sampler::loop()
     this->onEvent(SamplingEvent::Exit, nullptr);
 }
 
-void Sampler::stopTasks()
+void PtraceSampler::stopTasks()
 {
     for (int taskIndex: this->activeTasks)
     {
@@ -213,12 +214,7 @@ void Sampler::stopTasks()
     }
 }
 
-void Sampler::setEventListener(std::function<void(SamplingEvent, TaskContext*)> listener)
-{
-    this->onEvent = std::move(listener);
-}
-
-void Sampler::stop()
+void PtraceSampler::stop()
 {
     this->running = false;
     this->waitForExit();
@@ -241,12 +237,12 @@ void Sampler::stop()
     }
 }
 
-void Sampler::waitForExit()
+void PtraceSampler::waitForExit()
 {
     this->loopThread.join();
 }
 
-void Sampler::handleSignals(TaskContext* context)
+void PtraceSampler::handleSignals(TaskContext* context)
 {
     consumeSignals(context->getTask().getPid(), [this, context](int ret, int status)
     {
@@ -294,7 +290,7 @@ void Sampler::handleSignals(TaskContext* context)
         return true;
     });
 }
-bool Sampler::handleTaskCreation(TaskContext* context, int status)
+bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 {
     if (((status >> 8) == (SIGTRAP | (PTRACE_EVENT_CLONE << 8)))  ||
         ((status >> 8) == (SIGTRAP | (PTRACE_EVENT_FORK << 8)))   ||
@@ -308,18 +304,8 @@ bool Sampler::handleTaskCreation(TaskContext* context, int status)
     }
     else return false;
 }
-void Sampler::handleTaskEnd(TaskContext* context, int exitCode)
-{
-    context->getTask().deactivate(exitCode);
-    this->onEvent(SamplingEvent::TaskExit, context);
-}
-void Sampler::handleTaskCollect(TaskContext* context)
-{
-    context->getCollector().collect();
-    this->onEvent(SamplingEvent::TaskCollect, context);
-}
 
-void Sampler::initTracee(pid_t pid, bool attached, bool setoptions)
+void PtraceSampler::initTracee(pid_t pid, bool attached, bool setoptions)
 {
     int expectedSignal = attached ? SIGSTOP : SIGTRAP;
     consumeSignals(pid, [pid, expectedSignal, attached, setoptions](int ret, int status)
@@ -354,8 +340,10 @@ void Sampler::initTracee(pid_t pid, bool attached, bool setoptions)
         return true;
     });
 
-    this->tasks.push_back(std::make_unique<TaskContext>(Task(pid),
-                                                        std::make_unique<BackstackCollector>(pid, 32)));
-    this->activeTasks.push_back(static_cast<int>(this->tasks.size() - 1));
-    this->onEvent(SamplingEvent::TaskCreation, tasks.back().get());
+    this->handleTaskCreation(pid);
+}
+
+std::unique_ptr<BackstackCollector> createCollector(uint32_t pid)
+{
+    return std::make_unique<UnwindCollector>(pid, 32);
 }
