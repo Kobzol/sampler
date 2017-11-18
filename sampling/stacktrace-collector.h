@@ -10,9 +10,10 @@ class StacktraceCollector
 {
 public:
     explicit StacktraceCollector(uint32_t pid, uint32_t stackLimit);
+    virtual ~StacktraceCollector() = default;
 
     StacktraceCollector(const StacktraceCollector& other) = delete;
-    StacktraceCollector operator=(const StacktraceCollector& other) = delete;
+    StacktraceCollector& operator=(const StacktraceCollector& other) = delete;
     StacktraceCollector(const StacktraceCollector&& other) = delete;
 
     virtual void collect() = 0;

@@ -2,18 +2,18 @@
 
 #include <libunwind-ptrace.h>
 
-UnwindBackstackCollector::UnwindBackstackCollector(uint32_t pid, uint32_t stackLimit)
-        : StacktraceCollector(pi, stackLimit)
+UnwindCollector::UnwindCollector(uint32_t pid, uint32_t stackLimit)
+        : StacktraceCollector(pid, stackLimit)
 {
     this->context = _UPT_create(pid);
 }
 
-UnwindBackstackCollector::~UnwindBackstackCollector()
+UnwindCollector::~UnwindCollector()
 {
     _UPT_destroy(this->context);
 }
 
-void UnwindBackstackCollector::collect()
+void UnwindCollector::collect()
 {
     unw_cursor_t cursor{};
     unw_addr_space_t space = unw_create_addr_space(&_UPT_accessors, 0);

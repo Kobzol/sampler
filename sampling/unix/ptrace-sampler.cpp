@@ -1,4 +1,4 @@
-#include "PtraceSampler.h"
+#include "ptrace-sampler.h"
 #include "utility.h"
 #include "unwind-collector.h"
 #include "../taskcontext.h"
@@ -255,7 +255,7 @@ void PtraceSampler::handleSignals(TaskContext* context)
             return false;
         }
 
-        if (!this->handleTaskCreation(context, status))
+        if (!this->checkNewTask(context, status))
         {
             if (WIFEXITED(status)) // exit
             {
@@ -340,10 +340,10 @@ void PtraceSampler::initTracee(pid_t pid, bool attached, bool setoptions)
         return true;
     });
 
-    this->handleTaskCreation(pid);
+    this->handleTaskCreate(pid);
 }
 
-std::unique_ptr<BackstackCollector> createCollector(uint32_t pid)
+std::unique_ptr<StacktraceCollector> PtraceSampler::createCollector(uint32_t pid)
 {
     return std::make_unique<UnwindCollector>(pid, 32);
 }

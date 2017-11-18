@@ -18,7 +18,7 @@ public:
     void waitForExit() override;
 
 protected:
-    virtual std::unique_ptr<BackstackCollector> createCollector(uint32_t pid) override;
+    virtual std::unique_ptr<StacktraceCollector> createCollector(uint32_t pid) override;
 
 private:
     void createTasks();

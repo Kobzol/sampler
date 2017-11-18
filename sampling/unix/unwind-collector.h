@@ -8,11 +8,11 @@
 #include "../functionrecord.h"
 #include "../stacktrace-collector.h"
 
-class UnwindBackstackCollector: public StacktraceCollector
+class UnwindCollector: public StacktraceCollector
 {
 public:
-    explicit UnwindBackstackCollector(pid_t pid, uint32_t stackLimit);
-    ~UnwindBackstackCollector() override;
+    explicit UnwindCollector(uint32_t pid, uint32_t stackLimit);
+    ~UnwindCollector() override;
 
     void collect() override;
 
