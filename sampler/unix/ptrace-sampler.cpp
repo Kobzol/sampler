@@ -160,20 +160,42 @@ void PtraceSampler::loop()
 
         std::vector<int> nextTasks;
         size_t count = this->activeTasks.size();
-        for (int i = 0; i < count; i++)
+        std::unordered_map<int, bool> collectedTasks;
+        bool activeLeft = true;
+
+        while (this->running && collectedTasks.size() < count && activeLeft)
         {
-            int taskIndex = this->activeTasks[i];
-            auto* task = this->tasks[taskIndex].get();
+            activeLeft = false;
 
-            if (task->getTask().isActive())
+            for (int i = 0; i < count; i++)
             {
-                this->handleSignals(task);
+                int taskIndex = this->activeTasks[i];
+                auto* task = this->tasks[taskIndex].get();
 
-                if (task->getTask().isActive())
+                if (task->getTask().isActive() &&
+                        collectedTasks.find(task->getTask().getPid()) == collectedTasks.end())
                 {
-                    nextTasks.push_back(taskIndex);
+                    activeLeft = true;
+
+                    int status;
+                    int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED | WNOHANG);
+                    if (ret < 0)
+                    {
+                        this->handleTaskEnd(task, -1);
+                    }
+                    else if (ret == 0)
+                    {
+                        continue;
+                    }
+                    else if (this->checkStopSignal(task, status))
+                    {
+                        nextTasks.push_back(taskIndex);
+                        collectedTasks.insert({ task->getTask().getPid(), true });
+                    }
                 }
             }
+
+            usleep(100);
         }
 
         // add newly created tasks
@@ -238,54 +260,37 @@ void PtraceSampler::waitForExit()
     }
 }
 
-void PtraceSampler::handleSignals(TaskContext* context)
+bool PtraceSampler::checkStopSignal(TaskContext* context, int status)
 {
-    this->consumeSignals(context->getTask().getPid(), [this, context](int ret, int status)
+    // new task created
+    if (this->checkNewTask(context, status))
     {
-        if (ret < 0)
-        {
-#ifdef DEBUG
-            std::cerr << "TASKEND waitpid" << context->getTask().getPid() << std::endl;
-#endif
-            this->handleTaskEnd(context, -1);
-            return false;
-        }
+        this->restartRepeatedly(context->getTask().getPid(), context, 0);
+        return false;
+    }
 
-        if (!this->checkNewTask(context, status))
-        {
-            if (WIFEXITED(status)) // exit
-            {
-#ifdef DEBUG
-                std::cerr << "WIFEXITED " << context->getTask().getPid() << std::endl;
-#endif
-                this->handleTaskEnd(context, static_cast<uint32_t>(WEXITSTATUS(status)));
-                return false;
-            }
-            else if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) // expected stop
-            {
-#ifdef DEBUG
-                std::cerr << "EXPECTED SIGSTOP " << context->getTask().getPid() << std::endl;
-#endif
-                this->handleTaskCollect(context);
-
-                this->restartRepeatedly(context->getTask().getPid(), context, 0);
-                return false;
-            }
-        }
-        else
-        {
-#ifdef DEBUG
-            std::cerr << "HandleTaskCreation for " << context->getTask().getPid() << std::endl;
-#endif
-
-            this->restartRepeatedly(context->getTask().getPid(), context, 0);
-            return true;
-        }
-
-        this->restartRepeatedly(context->getTask().getPid(),
-                                context, WIFSIGNALED(status) ? WTERMSIG(status) : WSTOPSIG(status));
+    if (WIFEXITED(status))
+    {
+        this->handleTaskEnd(context, static_cast<uint32_t>(WEXITSTATUS(status)));
         return true;
-    });
+    }
+
+    if (WIFSIGNALED(status))
+    {
+        this->handleTaskEnd(context, static_cast<uint32_t>(WTERMSIG(status)));
+        return true;
+    }
+
+    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) // expected stop
+    {
+        this->handleTaskCollect(context);
+        this->restartRepeatedly(context->getTask().getPid(), context, 0);
+        return true;
+    }
+
+    this->restartRepeatedly(context->getTask().getPid(),
+                            context, WIFSIGNALED(status) ? WTERMSIG(status) : WSTOPSIG(status));
+    return false;
 }
 bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 {

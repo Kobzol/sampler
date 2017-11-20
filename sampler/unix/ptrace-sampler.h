@@ -32,7 +32,7 @@ private:
     void loop();
     void disconnect();
 
-    void handleSignals(TaskContext* context);
+    bool checkStopSignal(TaskContext* context, int status);
     bool checkNewTask(TaskContext* context, int status);
 
     void initTracee(pid_t pid, bool attached, bool setoptions);
