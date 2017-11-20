@@ -31,18 +31,17 @@ private:
     void stopTasks();
     void loop();
     void disconnect();
+    void initializeProcess(uint32_t pid);
 
     bool checkStopSignal(TaskContext* context, int status);
     bool checkNewTask(TaskContext* context, int status);
 
-    void initTracee(pid_t pid, bool attached, bool setoptions);
     bool restartRepeatedly(uint32_t pid, TaskContext* task, int signal);
-    void consumeSignals(pid_t pid, const std::function<bool (int, int)>& callback,
-                        bool checkEnd=true);
+    void consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback);
 
     void unwrapLibc(long ret, const std::string& message = "");
 
-    pid_t pid;
+    uint32_t pid;
 
     std::atomic<bool> running{false};
     std::thread loopThread;

@@ -14,7 +14,7 @@ TEST_CASE("Sampler attach doesn't stop target process")
 
     sleep(1);
 
-    write(in, "a\n", 2);
+    write(in, "a", 1);
 
     char buffer[128];
     ssize_t len = read(out, buffer, sizeof(buffer));
@@ -22,5 +22,4 @@ TEST_CASE("Sampler attach doesn't stop target process")
     REQUIRE(buffer[0] == '0');
 
     sampler->stop();
-    int a = 5;
 };

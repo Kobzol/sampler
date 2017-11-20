@@ -11,15 +11,13 @@
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
-#include <asm/unistd.h>
-#define tgkill(gtid, tid, sig) syscall (__NR_tgkill, (gtid), (tid), (sig))
-
 #ifdef PTRACE_OLDSETOPTIONS
     #undef PTRACE_SETOPTIONS
     #define PTRACE_SETOPTIONS PTRACE_OLDSETOPTIONS
 #endif
+#define PTRACE_EVENT_STOP (128)
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 static void debugStatus(int pid, int status)
@@ -29,6 +27,7 @@ static void debugStatus(int pid, int status)
     std::cerr << "WIFSIGNALED: " << WIFSIGNALED(status) << std::endl;
     std::cerr << "WIFEXITED: " << WIFEXITED(status) << std::endl;
     std::cerr << "WSTOPSIG: " << WSTOPSIG(status) << std::endl;
+    std::cerr << "PTRACE_EVENT_STOP: " << ((status >> 16) == PTRACE_EVENT_STOP) << std::endl;
     std::cerr << std::endl;
 }
 #endif
@@ -71,6 +70,9 @@ static std::unique_ptr<char*[]> parseEnvironment(const std::vector<std::pair<std
     return envp;
 }
 
+static long PTRACE_ATTACH_OPTIONS = PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACEEXIT;
+static long PTRACE_SPAWN_OPTIONS = PTRACE_ATTACH_OPTIONS | PTRACE_O_EXITKILL;
+
 
 PtraceSampler::PtraceSampler(uint32_t interval): Sampler(interval)
 {
@@ -84,13 +86,11 @@ void PtraceSampler::attach(uint32_t pid)
     this->running = true;
     this->loopThread = std::thread([this, pid]()
     {
-        this->unwrapLibc(ptrace(PTRACE_ATTACH, pid, nullptr, nullptr),
+        this->unwrapLibc(ptrace(PTRACE_SEIZE, pid, nullptr, PTRACE_ATTACH_OPTIONS),
                          "Couldn't attach to process " + std::to_string(pid));
         this->pid = static_cast<pid_t>(pid);
 
-        this->initTracee(this->pid, true, true);
-        this->createTasks();
-        this->loop();
+        this->initializeProcess(this->pid);
     });
 }
 void PtraceSampler::spawn(
@@ -101,18 +101,16 @@ void PtraceSampler::spawn(
 {
     assert(!this->running);
 
-    this->running.store(true);
+    this->running = true;
     this->loopThread = std::thread([this, program, cwd, arguments, environment]()
     {
-        this->pid = fork();
+        this->pid = static_cast<uint32_t>(fork());
         this->unwrapLibc(this->pid, "Program start failed");
 
         if (this->pid == 0)
         {
             auto args = parseArguments(arguments);
             auto envp = parseEnvironment(environment);
-
-            LOG_ERROR(ptrace(PTRACE_TRACEME, 0, nullptr, nullptr));
 
             if (!cwd.empty())
             {
@@ -123,10 +121,21 @@ void PtraceSampler::spawn(
             exit(0);
         }
 
-        this->initTracee(this->pid, false, true);
-        this->createTasks();
-        this->loop();
+        usleep(1000 * 100);
+
+        this->unwrapLibc(ptrace(PTRACE_SEIZE, this->pid, nullptr, PTRACE_SPAWN_OPTIONS),
+                         "Couldn't attach to spawned process");
+        this->initializeProcess(this->pid);
     });
+}
+
+void PtraceSampler::initializeProcess(uint32_t pid)
+{
+    this->onEvent(SamplingEvent::Start, nullptr);
+
+    this->handleTaskCreate(pid);
+    this->createTasks();
+    this->loop();
 }
 
 void PtraceSampler::createTasks()
@@ -137,24 +146,18 @@ void PtraceSampler::createTasks()
         // attach to existing threads
         if (task.getPid() != this->pid)
         {
-            this->unwrapLibc(ptrace(PTRACE_ATTACH, task.getPid(), nullptr, nullptr),
-                             "Couldn't attach to process thread");
-            this->initTracee(task.getPid(), true, true);
+            this->unwrapLibc(ptrace(PTRACE_SEIZE, task.getPid(), nullptr, PTRACE_ATTACH_OPTIONS),
+                             "Couldn't attach to process thread " + std::to_string(task.getPid()));
+            this->handleTaskCreate(task.getPid());
         }
     }
 }
 
 void PtraceSampler::loop()
 {
-    this->onEvent(SamplingEvent::Start, nullptr);
-
     Sleeptimer timer(this->interval);
     while (this->running && !this->activeTasks.empty())
     {
-#ifdef DEBUG
-        std::cerr << "Loop start: " << this->activeTasks.size() << " active threads" << std::endl;
-#endif
-
         timer.mark();
         this->stopTasks();
 
@@ -206,9 +209,6 @@ void PtraceSampler::loop()
 
         this->activeTasks = std::move(nextTasks);
 
-#ifdef DEBUG
-        std::cerr << "Sleeping" << std::endl;
-#endif
         timer.sleep();
     }
 
@@ -221,8 +221,7 @@ void PtraceSampler::stopTasks()
     for (int taskIndex: this->activeTasks)
     {
         auto* task = this->tasks[taskIndex].get();
-        long ret = tgkill(this->pid, task->getTask().getPid(), SIGSTOP);
-        LOG_ERROR(ret);
+        long ret = ptrace(PTRACE_INTERRUPT, task->getTask().getPid(), nullptr, nullptr);
 
         if (ret < 0 && errno == ESRCH)
         {
@@ -313,7 +312,7 @@ bool PtraceSampler::checkStopSignal(TaskContext* context, int status)
         return true;
     }
 
-    if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP) // expected stop
+    if (WIFSTOPPED(status) && ((status >> 16) == PTRACE_EVENT_STOP)) // expected stop
     {
         this->handleTaskCollect(context);
         this->restartRepeatedly(context->getTask().getPid(), context, 0);
@@ -332,63 +331,12 @@ bool PtraceSampler::checkNewTask(TaskContext* context, int status)
     {
         unsigned long pid;
         this->unwrapLibc(ptrace(PTRACE_GETEVENTMSG, context->getTask().getPid(), nullptr, &pid),
-                         "Couldn't attach to process thread");
+                         "Couldn't attach to new process thread");
         
-        this->initTracee(pid, true, false);
+        this->handleTaskCreate(pid);
         return true;
     }
     else return false;
-}
-
-void PtraceSampler::initTracee(pid_t pid, bool attached, bool setoptions)
-{
-    int expectedSignal = attached ? SIGSTOP : SIGTRAP;
-    bool success = true;
-
-    this->consumeSignals(pid, [this, pid, expectedSignal, attached, setoptions, &success](int ret, int status)
-    {
-        if (ret < 0)
-        {
-            this->unwrapLibc(-1, "Couldn't pause process");
-            return false;
-        }
-
-        if (WIFSTOPPED(status) && WSTOPSIG(status) == expectedSignal)
-        {
-            if (setoptions)
-            {
-                int options = PTRACE_O_TRACECLONE | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACEEXIT;
-                if (!attached)
-                {
-                    options |= PTRACE_O_EXITKILL;
-                }
-
-                this->unwrapLibc(ptrace(PTRACE_SETOPTIONS, pid, nullptr, options),
-                                 "Couldn't initialize thread options");
-            }
-
-            if (!this->restartRepeatedly(pid, nullptr, 0))
-            {
-                success = false;
-            }
-            return false;
-        }
-        else if (WIFSTOPPED(status))
-        {
-            if (!this->restartRepeatedly(pid, nullptr, WSTOPSIG(status)))
-            {
-                success = false;
-                return false;
-            }
-        }
-
-        return true;
-    });
-
-    if (success)
-    {
-        this->handleTaskCreate(pid);
-    }
 }
 
 std::unique_ptr<StacktraceCollector> PtraceSampler::createCollector(uint32_t pid)
@@ -412,15 +360,9 @@ bool PtraceSampler::restartRepeatedly(uint32_t pid, TaskContext* task, int signa
 {
     while (true)
     {
-#ifdef DEBUG
-        std::cerr << "Restarting " << pid << " with signal " << signal << std::endl;
-#endif
-
         if (!this->running) break;
         long ret = ptrace(PTRACE_CONT, pid, nullptr, signal);
-#ifdef DEBUG
-        std::cerr << "Restarting returned " << ret << std::endl;
-#endif
+
         if (ret < 0)
         {
             if (errno == ESRCH && task != nullptr)
@@ -437,38 +379,23 @@ bool PtraceSampler::restartRepeatedly(uint32_t pid, TaskContext* task, int signa
     return false;
 }
 
-void PtraceSampler::consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback, bool checkEnd)
+void PtraceSampler::killProcess()
+{
+    this->unwrapLibc(kill(this->pid, SIGKILL), "Couldn't kill process " + std::to_string(this->pid));
+}
+
+void PtraceSampler::consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback)
 {
     while (true)
     {
-#ifdef DEBUG
-        std::cerr << "Consuming for " << pid << std::endl;
-#endif
+        if (!this->running) return;
 
-        if (checkEnd && !this->running) return;
-
-        // TODO: better solution for timeout
         int status;
         int ret = waitpid(pid, &status, WUNTRACED);
-
-        if (ret == 0)
-        {
-            usleep(100);
-            continue;
-        }
-
-#ifdef DEBUG
-        debugStatus(pid, status);
-#endif
 
         if (!callback(ret, status))
         {
             return;
         }
     }
-}
-
-void PtraceSampler::killProcess()
-{
-    this->unwrapLibc(kill(this->pid, SIGKILL), "Couldn't kill process " + std::to_string(this->pid));
 }
