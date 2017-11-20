@@ -13,11 +13,11 @@ class PtraceSampler: public Sampler
 public:
     explicit PtraceSampler(uint32_t interval);
 
-    void connect(uint32_t pid) override;
-    void connect(const std::string& program,
-                 const std::string& cwd,
-                 const std::vector<std::string>& arguments,
-                 const std::vector<std::pair<std::string, std::string>>& environment) override;
+    void attach(uint32_t pid) override;
+    void spawn(const std::string& program,
+               const std::string& cwd,
+               const std::vector<std::string>& arguments,
+               const std::vector<std::pair<std::string, std::string>>& environment) override;
 
     void stop() override;
     void waitForExit() override;

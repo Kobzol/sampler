@@ -77,7 +77,7 @@ PtraceSampler::PtraceSampler(uint32_t interval): Sampler(interval)
 
 }
 
-void PtraceSampler::connect(uint32_t pid)
+void PtraceSampler::attach(uint32_t pid)
 {
     assert(!this->running);
 
@@ -93,7 +93,7 @@ void PtraceSampler::connect(uint32_t pid)
         this->loop();
     });
 }
-void PtraceSampler::connect(
+void PtraceSampler::spawn(
         const std::string& program,
         const std::string& cwd,
         const std::vector<std::string>& arguments,
@@ -221,7 +221,10 @@ void PtraceSampler::stopTasks()
     for (int taskIndex: this->activeTasks)
     {
         auto* task = this->tasks[taskIndex].get();
-        if (tgkill(this->pid, task->getTask().getPid(), SIGSTOP) < 0 && errno == ESRCH)
+        long ret = tgkill(this->pid, task->getTask().getPid(), SIGSTOP);
+        LOG_ERROR(ret);
+
+        if (ret < 0 && errno == ESRCH)
         {
             this->handleTaskEnd(task, -1);
         }
@@ -241,14 +244,43 @@ void PtraceSampler::stop()
 void PtraceSampler::disconnect()
 {
     this->stopTasks();
-    for (int taskIndex: this->activeTasks)
-    {
-        auto* task = this->tasks[taskIndex].get();
 
-        int status;
-        LOG_ERROR(waitpid(task->getTask().getPid(), &status, WUNTRACED));
-        LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
+    size_t count = this->activeTasks.size();
+    size_t detached = 0;
+    bool activeLeft = true;
+    size_t retryCount = 0;
+
+    while (detached < count && activeLeft && retryCount < 1000)
+    {
+        activeLeft = false;
+        retryCount++;
+
+        for (int taskIndex: this->activeTasks)
+        {
+            auto* task = this->tasks[taskIndex].get();
+            if (task->getTask().isActive())
+            {
+                activeLeft = true;
+
+                int status;
+                int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED | WNOHANG);
+                if (ret < 0)
+                {
+                    task->getTask().deactivate(-1);
+                    detached++;
+                }
+                else if (ret > 0)
+                {
+                    LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
+                    task->getTask().deactivate(-1);
+                    detached++;
+                }
+            }
+        }
+
+        usleep(10);
     }
+
     this->activeTasks.clear();
 }
 
@@ -417,7 +449,7 @@ void PtraceSampler::consumeSignals(pid_t pid, const std::function<bool(int, int)
 
         // TODO: better solution for timeout
         int status;
-        int ret = waitpid(pid, &status, WUNTRACED | WNOHANG);
+        int ret = waitpid(pid, &status, WUNTRACED);
 
         if (ret == 0)
         {

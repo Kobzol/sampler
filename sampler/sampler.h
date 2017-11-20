@@ -16,11 +16,11 @@ public:
     explicit Sampler(uint32_t interval);
     virtual ~Sampler() = default;
 
-    virtual void connect(uint32_t pid) = 0;
-    virtual void connect(const std::string& program,
-                         const std::string& cwd,
-                         const std::vector<std::string>& args,
-                         const std::vector<std::pair<std::string, std::string>>& environment) = 0;
+    virtual void attach(uint32_t pid) = 0;
+    virtual void spawn(const std::string& program,
+                       const std::string& cwd,
+                       const std::vector<std::string>& args,
+                       const std::vector<std::pair<std::string, std::string>>& environment) = 0;
 
     virtual void stop() = 0;
     virtual void waitForExit() = 0;

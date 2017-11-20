@@ -6,11 +6,6 @@ find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 set(Qt5_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS})
 set(CMAKE_AUTOMOC ON)
 
-if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    set(PLATFORM_LIBS unwind unwind-ptrace unwind-x86_64)
-endif()
-
 set(SOURCE_FILES
         main.cpp
         components/MainWindow.cpp

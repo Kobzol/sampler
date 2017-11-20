@@ -6,7 +6,7 @@ PidStartInfo::PidStartInfo(uint32_t pid): pid(pid)
 }
 void PidStartInfo::start(Sampler& sampler)
 {
-    sampler.connect(this->pid);
+    sampler.attach(this->pid);
 }
 
 ProgramStartInfo::ProgramStartInfo(std::string program, std::string workingDirectory):
@@ -16,5 +16,5 @@ ProgramStartInfo::ProgramStartInfo(std::string program, std::string workingDirec
 }
 void ProgramStartInfo::start(Sampler& sampler)
 {
-    sampler.connect(this->program, this->workingDirectory, {}, {});
+    sampler.spawn(this->program, this->workingDirectory, {}, {});
 }
