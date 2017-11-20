@@ -3,6 +3,7 @@
 #include <QDialog>
 #include <QListView>
 #include <QtWidgets/QVBoxLayout>
+#include <QSortFilterProxyModel>
 
 #include "../../model/process/Process.h"
 
@@ -19,9 +20,12 @@ private slots:
     void attachToSelectedProcess();
 
 private:
+    void createProcessList(QVBoxLayout* layout);
+
     std::vector<Process> processes;
     QListView* listview;
     Process selectedProcess;
+    QSortFilterProxyModel* filterModel;
 
-    void createProcessList(QVBoxLayout* layout);
+    void createSearchBox(QVBoxLayout* layout);
 };

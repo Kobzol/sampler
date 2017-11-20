@@ -16,6 +16,8 @@ AttachDialog::AttachDialog()
     auto* layout = new QVBoxLayout();
     this->setLayout(layout);
 
+    this->createSearchBox(layout);
+
     ProcessLister lister;
     this->processes = lister.getRunningProcesses();
     this->createProcessList(layout);
@@ -30,14 +32,16 @@ void AttachDialog::createProcessList(QVBoxLayout* layout)
     QStringList list;
     for (auto& process: this->processes)
     {
-        list << QString::fromStdString(std::__cxx11::to_string(process.getPid()) + ": " + process.getName());
+        list << QString::fromStdString(std::to_string(process.getPid()) + ": " + process.getName());
     }
 
     auto* model = new QStringListModel(this);
     model->setStringList(list);
+    this->filterModel = new QSortFilterProxyModel(this);
+    this->filterModel->setSourceModel(model);
 
     this->listview = new QListView(this);
-    this->listview->setModel(model);
+    this->listview->setModel(this->filterModel);
     this->listview->setSelectionMode(QAbstractItemView::SingleSelection);
     this->listview->setEditTriggers(QAbstractItemView::NoEditTriggers);
     this->connect(this->listview, &QListView::doubleClicked, this, &AttachDialog::attachToSelectedProcess);
@@ -62,4 +66,21 @@ void AttachDialog::attachToSelectedProcess()
 Process AttachDialog::getSelectedProcess() const
 {
     return this->selectedProcess;
+}
+
+void AttachDialog::createSearchBox(QVBoxLayout* layout)
+{
+    auto* row = new QWidget();
+    auto* rowLayout = new QHBoxLayout();
+    row->setLayout(rowLayout);
+
+    rowLayout->addWidget(new QLabel("Filter (regex):"));
+
+    auto* edit = new QLineEdit();
+    this->connect(edit, &QLineEdit::textChanged, [this](const QString& text) {
+        this->filterModel->setFilterRegExp(text);
+    });
+    rowLayout->addWidget(edit);
+
+    layout->addWidget(row);
 }
