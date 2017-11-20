@@ -222,17 +222,10 @@ void PtraceSampler::disconnect()
     for (int taskIndex: this->activeTasks)
     {
         auto* task = this->tasks[taskIndex].get();
-        this->consumeSignals(task->getTask().getPid(), [task](int ret, int status)
-        {
-            if (ret < 0) return false;
-            if (WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP)
-            {
-                LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, nullptr));
-                return false;
-            }
 
-            return true;
-        }, false);
+        int status;
+        LOG_ERROR(waitpid(task->getTask().getPid(), &status, WUNTRACED));
+        LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
     }
     this->activeTasks.clear();
 }
@@ -275,7 +268,7 @@ void PtraceSampler::handleSignals(TaskContext* context)
 #endif
                 this->handleTaskCollect(context);
 
-                this->restartRepeatedly(context->getTask().getPid(), 0);
+                this->restartRepeatedly(context->getTask().getPid(), context, 0);
                 return false;
             }
         }
@@ -285,11 +278,12 @@ void PtraceSampler::handleSignals(TaskContext* context)
             std::cerr << "HandleTaskCreation for " << context->getTask().getPid() << std::endl;
 #endif
 
-            this->restartRepeatedly(context->getTask().getPid(), 0);
+            this->restartRepeatedly(context->getTask().getPid(), context, 0);
             return true;
         }
 
-        this->restartRepeatedly(context->getTask().getPid(), WSTOPSIG(status));
+        this->restartRepeatedly(context->getTask().getPid(),
+                                context, WIFSIGNALED(status) ? WTERMSIG(status) : WSTOPSIG(status));
         return true;
     });
 }
@@ -312,7 +306,9 @@ bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 void PtraceSampler::initTracee(pid_t pid, bool attached, bool setoptions)
 {
     int expectedSignal = attached ? SIGSTOP : SIGTRAP;
-    this->consumeSignals(pid, [this, pid, expectedSignal, attached, setoptions](int ret, int status)
+    bool success = true;
+
+    this->consumeSignals(pid, [this, pid, expectedSignal, attached, setoptions, &success](int ret, int status)
     {
         if (ret < 0)
         {
@@ -334,18 +330,28 @@ void PtraceSampler::initTracee(pid_t pid, bool attached, bool setoptions)
                                  "Couldn't initialize thread options");
             }
 
-            this->restartRepeatedly(pid, 0);
+            if (!this->restartRepeatedly(pid, nullptr, 0))
+            {
+                success = false;
+            }
             return false;
         }
         else if (WIFSTOPPED(status))
         {
-            this->restartRepeatedly(pid, WSTOPSIG(status));
+            if (!this->restartRepeatedly(pid, nullptr, WSTOPSIG(status)))
+            {
+                success = false;
+                return false;
+            }
         }
 
         return true;
     });
 
-    this->handleTaskCreate(pid);
+    if (success)
+    {
+        this->handleTaskCreate(pid);
+    }
 }
 
 std::unique_ptr<StacktraceCollector> PtraceSampler::createCollector(uint32_t pid)
@@ -365,7 +371,7 @@ void PtraceSampler::unwrapLibc(long ret, const std::string& message)
     }
 }
 
-void PtraceSampler::restartRepeatedly(int pid, int signal)
+bool PtraceSampler::restartRepeatedly(uint32_t pid, TaskContext* task, int signal)
 {
     while (true)
     {
@@ -380,14 +386,18 @@ void PtraceSampler::restartRepeatedly(int pid, int signal)
 #endif
         if (ret < 0)
         {
-            if (errno == EINTR || errno == ESRCH)
+            if (errno == ESRCH && task != nullptr)
             {
-                continue;
+                this->handleTaskEnd(task, -1);
             }
             else this->unwrapLibc(ret, "Couldn't resume thread");
+
+            break;
         }
-        else break;
+        else return true;
     }
+
+    return false;
 }
 
 void PtraceSampler::consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback, bool checkEnd)

@@ -36,8 +36,9 @@ private:
     bool checkNewTask(TaskContext* context, int status);
 
     void initTracee(pid_t pid, bool attached, bool setoptions);
-    void restartRepeatedly(int pid, int signal);
-    void consumeSignals(pid_t pid, const std::function<bool (int, int)>& callback, bool checkEnd=true);
+    bool restartRepeatedly(uint32_t pid, TaskContext* task, int signal);
+    void consumeSignals(pid_t pid, const std::function<bool (int, int)>& callback,
+                        bool checkEnd=true);
 
     void unwrapLibc(long ret, const std::string& message = "");
 
