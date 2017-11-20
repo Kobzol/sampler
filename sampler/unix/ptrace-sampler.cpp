@@ -163,42 +163,24 @@ void PtraceSampler::loop()
 
         std::vector<int> nextTasks;
         size_t count = this->activeTasks.size();
-        std::unordered_map<int, bool> collectedTasks;
-        bool activeLeft = true;
-
-        while (this->running && collectedTasks.size() < count && activeLeft)
+        for (int i = 0; i < count; i++)
         {
-            activeLeft = false;
+            int taskIndex = this->activeTasks[i];
+            auto* task = this->tasks[taskIndex].get();
 
-            for (int i = 0; i < count; i++)
+            if (task->getTask().isActive())
             {
-                int taskIndex = this->activeTasks[i];
-                auto* task = this->tasks[taskIndex].get();
-
-                if (task->getTask().isActive() &&
-                        collectedTasks.find(task->getTask().getPid()) == collectedTasks.end())
+                int status;
+                int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED);
+                if (ret < 0)
                 {
-                    activeLeft = true;
-
-                    int status;
-                    int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED | WNOHANG);
-                    if (ret < 0)
-                    {
-                        this->handleTaskEnd(task, -1);
-                    }
-                    else if (ret == 0)
-                    {
-                        continue;
-                    }
-                    else if (this->checkStopSignal(task, status))
-                    {
-                        nextTasks.push_back(taskIndex);
-                        collectedTasks.insert({ task->getTask().getPid(), true });
-                    }
+                    this->handleTaskEnd(task, -1);
+                }
+                else if (this->checkStopSignal(task, status))
+                {
+                    nextTasks.push_back(taskIndex);
                 }
             }
-
-            usleep(100);
         }
 
         // add newly created tasks
@@ -244,40 +226,18 @@ void PtraceSampler::disconnect()
 {
     this->stopTasks();
 
-    size_t count = this->activeTasks.size();
-    size_t detached = 0;
-    bool activeLeft = true;
-    size_t retryCount = 0;
-
-    while (detached < count && activeLeft && retryCount < 1000)
+    for (int taskIndex: this->activeTasks)
     {
-        activeLeft = false;
-        retryCount++;
-
-        for (int taskIndex: this->activeTasks)
+        auto* task = this->tasks[taskIndex].get();
+        if (task->getTask().isActive())
         {
-            auto* task = this->tasks[taskIndex].get();
-            if (task->getTask().isActive())
+            int status;
+            int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED);
+            if (ret > 0)
             {
-                activeLeft = true;
-
-                int status;
-                int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED | WNOHANG);
-                if (ret < 0)
-                {
-                    task->getTask().deactivate(-1);
-                    detached++;
-                }
-                else if (ret > 0)
-                {
-                    LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
-                    task->getTask().deactivate(-1);
-                    detached++;
-                }
+                LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
             }
         }
-
-        usleep(10);
     }
 
     this->activeTasks.clear();
