@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4)
 
-project(sampling)
+project(sampler)
 
 set(SOURCE_FILES
     sampler.cpp
@@ -27,4 +27,4 @@ elseif (WIN32)
     )
 endif()
 
-add_library(sampling STATIC ${SOURCE_FILES} ${PLATFORM_FILES})
+add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES})

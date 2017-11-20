@@ -2,7 +2,8 @@
 
 enum class SamplingEvent
 {
-    Exit = 0,
+    Start = 0,
+    Exit,
     TaskCreation,
     TaskCollect,
     TaskExit

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "../sampler.h"
 #include "../sampling-event.h"
 #include "../task.h"
@@ -12,24 +14,32 @@ public:
     explicit PtraceSampler(uint32_t interval);
 
     void connect(uint32_t pid) override;
-    void connect(const std::vector<std::string>& args) override;
+    void connect(const std::string& program,
+                 const std::string& cwd,
+                 const std::vector<std::string>& arguments,
+                 const std::vector<std::pair<std::string, std::string>>& environment) override;
 
     void stop() override;
     void waitForExit() override;
+    void killProcess() override;
 
 protected:
     virtual std::unique_ptr<StacktraceCollector> createCollector(uint32_t pid) override;
 
 private:
     void createTasks();
-    void loop();
-
     void stopTasks();
+    void loop();
+    void disconnect();
 
     void handleSignals(TaskContext* context);
     bool checkNewTask(TaskContext* context, int status);
 
     void initTracee(pid_t pid, bool attached, bool setoptions);
+    void restartRepeatedly(int pid, int signal);
+    void consumeSignals(pid_t pid, const std::function<bool (int, int)>& callback, bool checkEnd=true);
+
+    void unwrapLibc(long ret, const std::string& message = "");
 
     pid_t pid;
 

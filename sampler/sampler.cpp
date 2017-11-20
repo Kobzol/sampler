@@ -9,6 +9,10 @@ void Sampler::setEventListener(std::function<void(SamplingEvent, TaskContext*)> 
 {
     this->onEvent = std::move(listener);
 }
+void Sampler::setErrorListener(std::function<void(const std::exception&)> listener)
+{
+    this->onError = std::move(listener);
+}
 
 void Sampler::handleTaskCollect(TaskContext* context)
 {

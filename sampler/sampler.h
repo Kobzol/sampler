@@ -17,12 +17,17 @@ public:
     virtual ~Sampler() = default;
 
     virtual void connect(uint32_t pid) = 0;
-    virtual void connect(const std::vector<std::string>& args) = 0;
+    virtual void connect(const std::string& program,
+                         const std::string& cwd,
+                         const std::vector<std::string>& args,
+                         const std::vector<std::pair<std::string, std::string>>& environment) = 0;
 
     virtual void stop() = 0;
     virtual void waitForExit() = 0;
+    virtual void killProcess() = 0;
 
     virtual void setEventListener(std::function<void(SamplingEvent, TaskContext*)> listener);
+    virtual void setErrorListener(std::function<void(const std::exception&)> listener);
 
 protected:
     virtual void handleTaskEnd(TaskContext* context, int exitCode);
@@ -34,5 +39,6 @@ protected:
     std::vector<std::unique_ptr<TaskContext>> tasks;
     std::vector<int> activeTasks;
 
-    std::function<void(SamplingEvent, TaskContext*)> onEvent;
+    std::function<void(SamplingEvent, TaskContext*)> onEvent = [](SamplingEvent, TaskContext*){ };
+    std::function<void(const std::exception& error)> onError = [](const std::exception&){ };
 };
