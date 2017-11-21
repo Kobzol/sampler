@@ -4,6 +4,20 @@
 #include <iostream>
 #include <QtCore/QtCore>
 
+#ifdef __linux__
+static std::string loadExe(const QString& taskPath)
+{
+    QFile file(QDir::cleanPath(taskPath + QDir::separator() + "exe"));
+    return file.symLinkTarget().toStdString();
+}
+static std::string loadCmdline(const QString& taskPath)
+{
+    QFile file(QDir::cleanPath(taskPath + QDir::separator() + "cmdline"));
+    file.open(QFile::ReadOnly | QFile::Text);
+    return file.readAll().toStdString();
+}
+#endif
+
 std::vector<Process> ProcessLister::getRunningProcesses() const
 {
 #ifdef __linux__
@@ -20,8 +34,8 @@ std::vector<Process> ProcessLister::getRunningProcesses() const
 
         if (parsed)
         {
-            QFile cmdline(QDir::cleanPath(path + QDir::separator() + "exe"));
-            processes.emplace_back(pid, cmdline.symLinkTarget().toStdString());
+            auto cmdline = loadCmdline(path);
+            processes.emplace_back(pid, cmdline.empty() ? loadExe(path) : cmdline);
         }
     }
 
