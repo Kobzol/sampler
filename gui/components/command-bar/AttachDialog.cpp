@@ -12,6 +12,7 @@
 AttachDialog::AttachDialog()
 {
     this->setWindowTitle("Attach to a process");
+    this->resize(400, 500);
 
     auto* layout = new QVBoxLayout();
     this->setLayout(layout);
@@ -58,7 +59,8 @@ void AttachDialog::attachToSelectedProcess()
     }
     else
     {
-        this->selectedProcess = this->processes[indices.first().row()];
+        auto index = this->filterModel->mapToSource(indices.first()).row();
+        this->selectedProcess = this->processes[index];
         this->accept();
     }
 }
