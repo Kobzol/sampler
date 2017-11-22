@@ -31,19 +31,6 @@ static void debugStatus(int pid, int status)
 }
 #endif
 
-static std::vector<Task> loadExistingTasks(pid_t pid)
-{
-    std::string taskPath = "/proc/" + std::to_string(pid) + "/task";
-    auto tids = getDirectoryFiles(taskPath);
-
-    std::vector<Task> tasks;
-    for (auto& tid : tids)
-    {
-        tasks.emplace_back(static_cast<uint32_t>(std::stoul(tid, nullptr, 10)));
-    }
-    return tasks;
-}
-
 static std::unique_ptr<char*[]> parseArguments(const std::vector<std::string>& arguments)
 {
     auto args = std::make_unique<char*[]>(arguments.size() + 1);
@@ -349,4 +336,23 @@ bool PtraceSampler::restartRepeatedly(uint32_t pid, TaskContext* task, int signa
 void PtraceSampler::killProcess()
 {
     this->unwrapLibc(kill(this->pid, SIGKILL), "Couldn't kill process " + std::to_string(this->pid));
+}
+
+std::vector<Task> PtraceSampler::loadExistingTasks(pid_t pid)
+{
+    std::string taskPath = "/proc/" + std::to_string(pid) + "/task";
+    auto tids = getDirectoryFiles(taskPath);
+
+    std::vector<Task> tasks;
+    for (auto& tid : tids)
+    {
+        auto threadid = static_cast<uint32_t>(std::stoul(tid, nullptr, 10));
+        tasks.push_back(this->createTask(threadid));
+    }
+    return tasks;
+}
+
+Task PtraceSampler::createTask(uint32_t pid)
+{
+    return Task(pid, loadThreadName(pid));
 }

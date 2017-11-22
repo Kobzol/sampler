@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <cstring>
 #include <chrono>
+#include <fstream>
 
 std::vector<std::string> getDirectoryFiles(const std::string& directory)
 {
@@ -47,4 +48,18 @@ size_t getTimestamp()
             std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::system_clock::now().time_since_epoch()).count()
     );
+}
+
+std::string loadThreadName(pid_t pid)
+{
+    std::ifstream fs("/proc/" + std::to_string(pid) + "/comm");
+
+    if (fs.is_open())
+    {
+        std::string line;
+        std::getline(fs, line);
+        return line;
+    }
+
+    return "";
 }

@@ -13,6 +13,7 @@
 
 std::vector<std::string> getDirectoryFiles(const std::string& directory);
 std::string loadExePath(pid_t pid);
+std::string loadThreadName(pid_t pid);
 
 bool ends_with(const std::string& value, const std::string& ending);
 

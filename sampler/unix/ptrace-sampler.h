@@ -24,7 +24,8 @@ public:
     void killProcess() override;
 
 protected:
-    virtual std::unique_ptr<StacktraceCollector> createCollector(uint32_t pid) override;
+    std::unique_ptr<StacktraceCollector> createCollector(uint32_t pid) override;
+    Task createTask(uint32_t pid) override;
 
 private:
     void createTasks();
@@ -37,7 +38,7 @@ private:
     bool checkNewTask(TaskContext* context, int status);
 
     bool restartRepeatedly(uint32_t pid, TaskContext* task, int signal);
-    void consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback);
+    std::vector<Task> loadExistingTasks(pid_t pid);
 
     void unwrapLibc(long ret, const std::string& message = "");
 

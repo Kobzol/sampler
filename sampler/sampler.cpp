@@ -28,7 +28,7 @@ void Sampler::handleTaskEnd(TaskContext* context, int exitCode)
 
 TaskContext* Sampler::handleTaskCreate(uint32_t pid)
 {
-    this->tasks.push_back(std::make_unique<TaskContext>(Task(pid), this->createCollector(pid)));
+    this->tasks.push_back(std::make_unique<TaskContext>(this->createTask(pid), this->createCollector(pid)));
     this->activeTasks.push_back(static_cast<int>(this->tasks.size() - 1));
     this->onEvent(SamplingEvent::TaskCreation, this->tasks.back().get());
 

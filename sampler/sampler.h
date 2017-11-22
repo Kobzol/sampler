@@ -33,7 +33,9 @@ protected:
     virtual void handleTaskEnd(TaskContext* context, int exitCode);
     virtual void handleTaskCollect(TaskContext* context);
     virtual TaskContext* handleTaskCreate(uint32_t pid);
+
     virtual std::unique_ptr<StacktraceCollector> createCollector(uint32_t pid) = 0;
+    virtual Task createTask(uint32_t pid) = 0;
 
     uint32_t interval;
     std::vector<std::unique_ptr<TaskContext>> tasks;
