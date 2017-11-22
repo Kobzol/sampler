@@ -10,6 +10,7 @@ set(SOURCE_FILES
     task.cpp
     taskcontext.cpp
     functionrecord.cpp
+    export/flamechart-exporter.cpp
 )
 
 if (UNIX)

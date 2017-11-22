@@ -29,6 +29,9 @@ public:
     virtual void setEventListener(std::function<void(SamplingEvent, TaskContext*)> listener);
     virtual void setErrorListener(std::function<void(const std::exception&)> listener);
 
+    size_t getTaskCount() const;
+    TaskContext* getTaskAt(size_t index);
+
 protected:
     virtual void handleTaskEnd(TaskContext* context, int exitCode);
     virtual void handleTaskCollect(TaskContext* context);

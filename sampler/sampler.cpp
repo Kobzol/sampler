@@ -34,3 +34,13 @@ TaskContext* Sampler::handleTaskCreate(uint32_t pid)
 
     return this->tasks.back().get();
 }
+
+size_t Sampler::getTaskCount() const
+{
+    return this->tasks.size();
+}
+
+TaskContext* Sampler::getTaskAt(size_t index)
+{
+    return this->tasks[index].get();
+}
