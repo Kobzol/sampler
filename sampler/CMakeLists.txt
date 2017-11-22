@@ -17,8 +17,11 @@ if (UNIX)
             unix/ptrace-sampler.cpp
             unix/unwind-collector.cpp
             unix/demangler.cpp
-            unix/utility.cpp
+            unix/utility/utility.cpp
+            unix/utility/map-segment.cpp
             unix/cputime-collector.cpp
+            unix/resolver/addrline-resolver.cpp
+            unix/resolver/resolver-process.cpp
     )
 elseif (WIN32)
     set(PLATFORM_FILES

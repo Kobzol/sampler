@@ -43,6 +43,7 @@ private:
 
     uint32_t pid;
 
+    std::unique_ptr<AddrlineResolver> resolver;
     std::atomic<bool> running{false};
     std::thread loopThread;
 };

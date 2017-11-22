@@ -1,11 +1,10 @@
 #include "ptrace-sampler.h"
-#include "utility.h"
+#include "utility/utility.h"
 #include "unwind-collector.h"
 #include "../taskcontext.h"
 #include "../sleeptimer.h"
 
 #include <cstring>
-#include <iostream>
 #include <cassert>
 
 #include <sys/ptrace.h>
@@ -17,7 +16,7 @@
 #endif
 #define PTRACE_EVENT_STOP (128)
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 static void debugStatus(int pid, int status)
@@ -133,6 +132,8 @@ void PtraceSampler::initializeProcess(uint32_t pid)
 {
     this->onEvent(SamplingEvent::Start, nullptr);
 
+    this->resolver = std::make_unique<AddrlineResolver>(pid);
+
     this->handleTaskCreate(pid);
     this->createTasks();
     this->loop();
@@ -241,6 +242,12 @@ void PtraceSampler::disconnect()
     }
 
     this->activeTasks.clear();
+
+    if (this->resolver)
+    {
+        this->resolver->shutdown();
+        this->resolver.release();
+    }
 }
 
 void PtraceSampler::waitForExit()
@@ -301,7 +308,7 @@ bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 
 std::unique_ptr<StacktraceCollector> PtraceSampler::createCollector(uint32_t pid)
 {
-    return std::make_unique<UnwindCollector>(pid, 32);
+    return std::make_unique<UnwindCollector>(pid, 32, *this->resolver);
 }
 
 void PtraceSampler::unwrapLibc(long ret, const std::string& message)
@@ -342,20 +349,4 @@ bool PtraceSampler::restartRepeatedly(uint32_t pid, TaskContext* task, int signa
 void PtraceSampler::killProcess()
 {
     this->unwrapLibc(kill(this->pid, SIGKILL), "Couldn't kill process " + std::to_string(this->pid));
-}
-
-void PtraceSampler::consumeSignals(pid_t pid, const std::function<bool(int, int)>& callback)
-{
-    while (true)
-    {
-        if (!this->running) return;
-
-        int status;
-        int ret = waitpid(pid, &status, WUNTRACED);
-
-        if (!callback(ret, status))
-        {
-            return;
-        }
-    }
 }
