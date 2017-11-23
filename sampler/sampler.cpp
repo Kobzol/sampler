@@ -30,7 +30,7 @@ TaskContext* Sampler::handleTaskCreate(uint32_t pid)
 {
     this->tasks.push_back(std::make_unique<TaskContext>(this->createTask(pid), this->createCollector(pid)));
     this->activeTasks.push_back(static_cast<int>(this->tasks.size() - 1));
-    this->onEvent(SamplingEvent::TaskCreation, this->tasks.back().get());
+    this->onEvent(SamplingEvent::TaskCreate, this->tasks.back().get());
 
     return this->tasks.back().get();
 }
@@ -43,4 +43,26 @@ size_t Sampler::getTaskCount() const
 TaskContext* Sampler::getTaskAt(size_t index)
 {
     return this->tasks[index].get();
+}
+
+void Sampler::pause()
+{
+    if (!this->paused)
+    {
+        this->paused = true;
+        this->onEvent(SamplingEvent::Pause, nullptr);
+    }
+}
+void Sampler::resume()
+{
+    if (this->paused)
+    {
+        this->paused = false;
+        this->onEvent(SamplingEvent::Resume, nullptr);
+    }
+}
+
+bool Sampler::isPaused()
+{
+    return this->paused;
 }

@@ -22,6 +22,8 @@ public:
     void stopSampler();
     void killProcess();
 
+    Sampler* getSampler();
+
 private:
     EventBroadcaster<SamplerManager, SamplingEvent, TaskContext*> samplerEventStream;
     EventBroadcaster<SamplerManager, const std::exception&> samplerErrorStream;

@@ -54,3 +54,8 @@ void SamplerManager::killProcess()
         this->stopSampler();
     }
 }
+
+Sampler* SamplerManager::getSampler()
+{
+    return this->sampler.get();
+}

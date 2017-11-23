@@ -29,6 +29,10 @@ public:
     virtual void setEventListener(std::function<void(SamplingEvent, TaskContext*)> listener);
     virtual void setErrorListener(std::function<void(const std::exception&)> listener);
 
+    void pause();
+    void resume();
+    bool isPaused();
+
     size_t getTaskCount() const;
     TaskContext* getTaskAt(size_t index);
 
@@ -43,6 +47,7 @@ protected:
     uint32_t interval;
     std::vector<std::unique_ptr<TaskContext>> tasks;
     std::vector<int> activeTasks;
+    std::atomic<bool> paused { false };
 
     std::function<void(SamplingEvent, TaskContext*)> onEvent = [](SamplingEvent, TaskContext*){ };
     std::function<void(const std::exception& error)> onError = [](const std::exception&){ };

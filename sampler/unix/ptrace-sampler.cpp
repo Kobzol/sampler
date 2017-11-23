@@ -147,37 +147,41 @@ void PtraceSampler::loop()
     while (this->running && !this->activeTasks.empty())
     {
         timer.mark();
-        this->stopTasks();
 
-        std::vector<int> nextTasks;
-        size_t count = this->activeTasks.size();
-        for (int i = 0; i < count; i++)
+        if (!this->paused)
         {
-            int taskIndex = this->activeTasks[i];
-            auto* task = this->tasks[taskIndex].get();
+            this->stopTasks();
 
-            if (task->getTask().isActive())
+            std::vector<int> nextTasks;
+            size_t count = this->activeTasks.size();
+            for (int i = 0; i < count; i++)
             {
-                int status;
-                int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED);
-                if (ret < 0)
+                int taskIndex = this->activeTasks[i];
+                auto* task = this->tasks[taskIndex].get();
+
+                if (task->getTask().isActive())
                 {
-                    this->handleTaskEnd(task, -1);
-                }
-                else if (this->checkStopSignal(task, status))
-                {
-                    nextTasks.push_back(taskIndex);
+                    int status;
+                    int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED);
+                    if (ret < 0)
+                    {
+                        this->handleTaskEnd(task, -1);
+                    }
+                    else if (this->checkStopSignal(task, status))
+                    {
+                        nextTasks.push_back(taskIndex);
+                    }
                 }
             }
-        }
 
-        // add newly created tasks
-        for (size_t i = count; i < this->activeTasks.size(); i++)
-        {
-            nextTasks.push_back(this->activeTasks[i]);
-        }
+            // add newly created tasks
+            for (size_t i = count; i < this->activeTasks.size(); i++)
+            {
+                nextTasks.push_back(this->activeTasks[i]);
+            }
 
-        this->activeTasks = std::move(nextTasks);
+            this->activeTasks = std::move(nextTasks);
+        }
 
         timer.sleep();
     }
@@ -235,6 +239,8 @@ void PtraceSampler::disconnect()
         this->resolver->shutdown();
         this->resolver.release();
     }
+
+    this->resume();
 }
 
 void PtraceSampler::waitForExit()

@@ -3,8 +3,10 @@
 enum class SamplingEvent
 {
     Start = 0,
+    Pause,
+    Resume,
     Exit,
-    TaskCreation,
+    TaskCreate,
     TaskCollect,
     TaskExit
 };

@@ -27,6 +27,10 @@ void CommandBar::createButtons(QHBoxLayout* layout)
     this->detachButton->setStatusTip("Detach from a running program");
     this->detachButton->setEnabled(false);
 
+    this->pauseResumeButton = this->createCommandButton(layout, "Pause", 0, &CommandBar::handlePauseResume);
+    this->pauseResumeButton->setStatusTip("Pause sampling");
+    this->pauseResumeButton->setEnabled(false);
+
     this->killButton = this->createCommandButton(layout, "Kill process", 1, &CommandBar::handleKill);
     this->killButton->setStatusTip("Kill profiled process");
     this->killButton->setEnabled(false);
@@ -89,6 +93,7 @@ void CommandBar::handleSamplerEvent(SamplingEvent event, TaskContext* task)
         this->runProgramButton->setEnabled(false);
         this->detachButton->setEnabled(true);
         this->killButton->setEnabled(true);
+        this->pauseResumeButton->setEnabled(true);
     }
     else if (event == SamplingEvent::Exit)
     {
@@ -96,6 +101,18 @@ void CommandBar::handleSamplerEvent(SamplingEvent event, TaskContext* task)
         this->runProgramButton->setEnabled(true);
         this->detachButton->setEnabled(false);
         this->killButton->setEnabled(false);
+        this->pauseResumeButton->setEnabled(false);
+    }
+
+    if (event == SamplingEvent::Start || event == SamplingEvent::Resume)
+    {
+        this->pauseResumeButton->setText("Pause");
+        this->pauseResumeButton->setStatusTip("Pause sampling");
+    }
+    else if (event == SamplingEvent::Pause)
+    {
+        this->pauseResumeButton->setText("Resume");
+        this->pauseResumeButton->setStatusTip("Resume sampling");
     }
 }
 
@@ -107,4 +124,17 @@ void CommandBar::startSampler(std::unique_ptr<StartInfo> startInfo)
 void CommandBar::handleKill()
 {
     this->samplerManager.killProcess();
+}
+
+void CommandBar::handlePauseResume()
+{
+    auto* sampler = this->samplerManager.getSampler();
+    if (sampler != nullptr)
+    {
+        if (sampler->isPaused())
+        {
+            sampler->resume();
+        }
+        else sampler->pause();
+    }
 }

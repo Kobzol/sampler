@@ -19,6 +19,7 @@ private slots:
     void showAttachDialog();
     void showRunProgramDialog();
     void handleDetach();
+    void handlePauseResume();
     void handleKill();
     void handleSamplerEvent(SamplingEvent event, TaskContext* task);
 
@@ -32,6 +33,7 @@ private:
     QPushButton* attachButton;
     QPushButton* runProgramButton;
     QPushButton* detachButton;
+    QPushButton* pauseResumeButton;
     QPushButton* killButton;
 
     std::string program = "/home/kobzol/projects/sampler/cmake-build-debug/profiled/profiled";
