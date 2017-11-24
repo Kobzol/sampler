@@ -12,12 +12,17 @@ set(SOURCE_FILES
         components/command-bar/AttachDialog.cpp
         components/command-bar/CommandBar.cpp
         components/command-bar/RunProgramDialog.cpp
+        components/common/tree/TreeModel.cpp
+        components/common/tree/TreeItem.cpp
+        components/trace/topdown/TopdownTreeView.cpp
         model/process/ProcessLister.cpp
         model/process/Process.cpp
         model/sampler/SamplerManager.cpp
         model/util/event/event-broadcaster.h
         model/util/event/subscription-manager.cpp
-        model/sampler/StartInfo.cpp model/sampler/StartInfo.h utility/Utility.cpp utility/Utility.h)
+        model/sampler/StartInfo.cpp
+        utility/Utility.cpp
+        model/statistics/TopdownTreeCalculator.cpp model/statistics/TopdownTreeCalculator.h)
 
 add_executable(gui ${SOURCE_FILES})
 target_link_libraries(gui sampler Qt5::Widgets ${PLATFORM_LIBS})

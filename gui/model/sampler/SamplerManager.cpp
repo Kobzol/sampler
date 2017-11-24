@@ -42,7 +42,6 @@ void SamplerManager::stopSampler()
     if (this->sampler)
     {
         this->sampler->stop();
-        this->sampler.release();
     }
 }
 

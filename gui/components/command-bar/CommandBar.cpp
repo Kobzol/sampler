@@ -118,7 +118,7 @@ void CommandBar::handleSamplerEvent(SamplingEvent event, TaskContext* task)
 
 void CommandBar::startSampler(std::unique_ptr<StartInfo> startInfo)
 {
-    this->samplerManager.startSampler(200, std::move(startInfo));
+    this->samplerManager.startSampler(20, std::move(startInfo));
 }
 
 void CommandBar::handleKill()

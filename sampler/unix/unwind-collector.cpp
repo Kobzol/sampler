@@ -3,6 +3,7 @@
 
 #include <libunwind-ptrace.h>
 #include <iostream>
+#include <algorithm>
 
 UnwindCollector::UnwindCollector(uint32_t pid, uint32_t stackLimit, AddrlineResolver& resolver)
         : StacktraceCollector(pid, stackLimit), resolver(resolver)
@@ -46,5 +47,6 @@ void UnwindCollector::collect()
         }
     }
 
+    std::reverse(records.begin(), records.end());
     this->addTrace(StackTrace(records));
 }

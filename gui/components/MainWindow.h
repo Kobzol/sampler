@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include "../model/sampler/SamplerManager.h"
+#include "trace/topdown/TopdownTreeView.h"
 
 class MainWindow: public QMainWindow
 {
@@ -18,4 +19,5 @@ private:
     void createContent();
 
     SamplerManager& samplerManager;
+    TopdownTreeView* topdownTree;
 };

@@ -6,10 +6,10 @@ std::string FlameChartExporter::serializeFrame(const StackTrace& trace)
     auto functions = trace.getFunctions();
 
     std::stringstream ss;
-    for (ssize_t i = functions.size() - 1; i >= 0; i--)
+    for (ssize_t i = 0; i < functions.size(); i++)
     {
         ss << functions[i].getName();
-        if (i != 0) ss << ";";
+        if (i != functions.size() - 1) ss << ";";
     }
     return ss.str();
 }

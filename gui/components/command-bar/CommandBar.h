@@ -36,7 +36,7 @@ private:
     QPushButton* pauseResumeButton;
     QPushButton* killButton;
 
-    std::string program = "/home/kobzol/projects/sampler/cmake-build-debug/profiled/profiled";
+    std::string program = "/home/kobzol/projects/agu/cmake-build-debug/agu";
     std::string cwd = "";
 
     SubscriptionManager subManager;
