@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <memory>
+#include <iostream>
 
 #include "components/MainWindow.h"
 

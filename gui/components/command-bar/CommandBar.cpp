@@ -45,8 +45,7 @@ void CommandBar::setSamplerEvents(SamplerManager& samplerManager)
     this->subManager += samplerManager.onSamplerError().subscribe([this](const std::exception& error) {
         std::string msg(error.what());
         runOnUi(this, [this, msg]() {
-            QMessageBox(QMessageBox::Icon::Warning, "Profiling error", msg.c_str(),
-                        QMessageBox::StandardButton::Ok, this).exec();
+            QMessageBox::warning(this, "Profiling error", msg.c_str(), QMessageBox::StandardButton::Ok);
         });
     });
 }
@@ -71,12 +70,15 @@ void CommandBar::showAttachDialog()
 }
 void CommandBar::showRunProgramDialog()
 {
-    RunProgramDialog dialog(this->program, this->cwd);
+    RunProgramDialog dialog(this->program, this->cwd, this->arguments, this->environment);
     if (dialog.exec())
     {
         this->program = dialog.getProgram();
         this->cwd = dialog.getWorkingDirectory();
-        this->startSampler(std::make_unique<ProgramStartInfo>(this->program, this->cwd));
+        this->arguments = dialog.getArguments();
+        this->environment = dialog.getEnvironment();
+        this->startSampler(std::make_unique<ProgramStartInfo>(this->program, this->cwd,
+                                                              this->arguments, this->environment));
     }
 }
 

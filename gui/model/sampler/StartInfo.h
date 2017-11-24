@@ -25,11 +25,14 @@ private:
 class ProgramStartInfo: public StartInfo
 {
 public:
-    ProgramStartInfo(std::string program, std::string workingDirectory);
+    ProgramStartInfo(std::string program, std::string workingDirectory,
+                     std::vector<std::string> arguments, std::vector<std::string> environment);
 
     void start(Sampler& sampler) override;
 
 private:
     std::string program;
     std::string workingDirectory;
+    std::vector<std::string> arguments;
+    std::vector<std::string> environment;
 };

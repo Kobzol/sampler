@@ -29,27 +29,30 @@ static void debugStatus(int pid, int status)
 }
 #endif
 
-static std::unique_ptr<char*[]> parseArguments(const std::vector<std::string>& arguments)
+static std::vector<char*> parseArguments(const std::string& program, const std::vector<std::string>& arguments)
 {
-    auto args = std::make_unique<char*[]>(arguments.size() + 1);
-    for (size_t i = 0; i < arguments.size(); i++)
+    size_t argCount = arguments.size() + 2;
+    std::vector<char*> args;
+    args.push_back(const_cast<char*>(program.c_str()));
+
+    for (size_t i = 1; i < argCount - 1; i++)
     {
-        args[i] = const_cast<char*>(arguments[i].c_str());
+        args.push_back(const_cast<char*>(arguments[i - 1].c_str()));
     }
-    args[arguments.size()] = nullptr;
+    args.push_back(nullptr);
 
     return args;
 }
-static std::unique_ptr<char*[]> parseEnvironment(const std::vector<std::pair<std::string, std::string>>& environment)
+static std::vector<char*> parseEnvironment(const std::vector<std::pair<std::string, std::string>>& environment)
 {
-    auto envp = std::make_unique<char*[]>(environment.size() + 1);
-    for (size_t i = 0; i < environment.size(); i++)
+    std::vector<char*> envp;
+    for (auto& env : environment)
     {
-        auto* record = new std::string(environment[i].first);
-        *record += "=" + environment[i].second;
-        envp[i] = const_cast<char*>(record->c_str());
+        auto* record = new std::string(env.first);
+        *record += "=" + env.second;
+        envp.push_back(const_cast<char*>(record->c_str()));
     }
-    envp[environment.size()] = nullptr;
+    envp.push_back(nullptr);
 
     return envp;
 }
@@ -93,7 +96,7 @@ void PtraceSampler::spawn(
 
         if (this->pid == 0)
         {
-            auto args = parseArguments(arguments);
+            auto args = parseArguments(program, arguments);
             auto envp = parseEnvironment(environment);
 
             if (!cwd.empty())
@@ -101,7 +104,7 @@ void PtraceSampler::spawn(
                 LOG_ERROR(chdir(cwd.c_str()));
             }
 
-            LOG_ERROR(execvpe(program.c_str(), args.get(), envp.get()));
+            LOG_ERROR(execvpe(program.c_str(), args.data(), envp.data()));
             exit(0);
         }
 

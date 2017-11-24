@@ -54,8 +54,8 @@ void AttachDialog::attachToSelectedProcess()
     auto indices = this->listview->selectionModel()->selectedIndexes();
     if (indices.isEmpty())
     {
-        QMessageBox(QMessageBox::Icon::Warning, "Error", "You have to select a process",
-                    QMessageBox::StandardButton::Ok, this).exec();
+        QMessageBox::warning(this, "Error", "You have to select a process",
+                             QMessageBox::StandardButton::Ok);
     }
     else
     {
