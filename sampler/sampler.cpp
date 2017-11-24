@@ -1,6 +1,6 @@
 #include "sampler.h"
 
-Sampler::Sampler(uint32_t interval): interval(interval)
+Sampler::Sampler(uint32_t interval): interval(interval), trace(std::make_unique<Trace>())
 {
 
 }
@@ -28,21 +28,13 @@ void Sampler::handleTaskEnd(TaskContext* context, int exitCode)
 
 TaskContext* Sampler::handleTaskCreate(uint32_t pid)
 {
-    this->tasks.push_back(std::make_unique<TaskContext>(this->createTask(pid), this->createCollector(pid)));
-    this->activeTasks.push_back(static_cast<int>(this->tasks.size() - 1));
-    this->onEvent(SamplingEvent::TaskCreate, this->tasks.back().get());
+    this->trace->addTask(std::make_unique<TaskContext>(this->createTask(pid), this->createCollector(pid)));
+    this->activeTasks.push_back(static_cast<int>(this->trace->getTaskCount() - 1));
 
-    return this->tasks.back().get();
-}
+    auto* task = this->trace->getTaskAt(this->trace->getTaskCount() - 1);
+    this->onEvent(SamplingEvent::TaskCreate, task);
 
-size_t Sampler::getTaskCount() const
-{
-    return this->tasks.size();
-}
-
-TaskContext* Sampler::getTaskAt(size_t index)
-{
-    return this->tasks[index].get();
+    return task;
 }
 
 void Sampler::pause()
@@ -65,4 +57,9 @@ void Sampler::resume()
 bool Sampler::isPaused()
 {
     return this->paused;
+}
+
+Trace* Sampler::getTrace()
+{
+    return this->trace.get();
 }

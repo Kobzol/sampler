@@ -1,20 +1,15 @@
 #include "TopdownTreeCalculator.h"
 
-struct CallRecord
-{
-    std::string parent = "";
-    std::string function = "";
-    size_t samples = 0;
-};
-
 static std::string hashRecord(const std::string& parent, const std::string& function)
 {
     return parent + "-" + function;
 }
 
-void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& root)
+void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& root,
+                                              const std::function<std::vector<std::string>(const CallRecord&)>&
+                                              callback)
 {
-    auto& traces = context.getCollector().getTraces();
+    auto& traces = context.getCollector().getSamples();
 
     std::unordered_map<std::string, TreeItem*> parents = {
             {"", &root}
@@ -35,7 +30,9 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
                 auto it = counts.find(hash);
                 if (it == counts.end())
                 {
-                    it = counts.insert({hash, CallRecord { parent, function, 0 } }).first;
+                    it = counts.insert({hash, CallRecord {
+                            parent, function, functions[stackLevel].getLocation(), 0
+                    } }).first;
                 }
 
                 it->second.samples++;
@@ -47,8 +44,7 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
         std::unordered_map<std::string, TreeItem*> nextParents;
         for (auto& kv: counts)
         {
-            std::vector<std::string> columns = { kv.second.function, std::to_string(kv.second.samples) };
-            auto* item = new TreeItem(columns);
+            auto* item = new TreeItem(callback(kv.second));
             parents[kv.second.parent]->addChild(item);
             nextParents.insert({ kv.second.function, item });
         }

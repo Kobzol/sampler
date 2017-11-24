@@ -22,7 +22,7 @@ set(SOURCE_FILES
         model/util/event/subscription-manager.cpp
         model/sampler/StartInfo.cpp
         utility/Utility.cpp
-        model/statistics/TopdownTreeCalculator.cpp model/statistics/TopdownTreeCalculator.h)
+        model/statistics/TopdownTreeCalculator.cpp model/statistics/TopdownTreeCalculator.h components/trace/TraceView.cpp components/trace/TraceView.h components/trace/topdown/TopdownGroupView.cpp components/trace/topdown/TopdownGroupView.h)
 
 add_executable(gui ${SOURCE_FILES})
 target_link_libraries(gui sampler Qt5::Widgets ${PLATFORM_LIBS})

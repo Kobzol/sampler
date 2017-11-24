@@ -18,7 +18,7 @@ public:
 
     virtual void collect() = 0;
 
-    const std::vector<StackTrace>& getTraces() const;
+    const std::vector<StackTrace>& getSamples() const;
 
 protected:
     virtual void addTrace(StackTrace trace);

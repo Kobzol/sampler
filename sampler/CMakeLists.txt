@@ -9,6 +9,7 @@ set(SOURCE_FILES
     stacktrace-collector.cpp
     task.cpp
     taskcontext.cpp
+    trace.cpp
     functionrecord.cpp
     export/flamechart-exporter.cpp
 )
@@ -28,7 +29,7 @@ elseif (WIN32)
     set(PLATFORM_FILES
             win32/debugevent-sampler.cpp
             win32/stackwalk-collector.cpp
-            export/dump-exporter.cpp export/dump-exporter.h)
+)
 endif()
 
 add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES})

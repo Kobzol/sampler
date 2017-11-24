@@ -18,7 +18,7 @@ std::vector<std::string> FlameChartExporter::createCondensedFrames(TaskContext& 
 {
     std::vector<std::string> frames;
 
-    for (auto& trace: task.getCollector().getTraces())
+    for (auto& trace: task.getCollector().getSamples())
     {
         auto serialized = this->serializeFrame(trace);
         auto it = this->frameCounter.find(serialized);

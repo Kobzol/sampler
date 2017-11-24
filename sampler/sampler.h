@@ -9,6 +9,7 @@
 
 #include "taskcontext.h"
 #include "sampling-event.h"
+#include "trace.h"
 
 class Sampler
 {
@@ -33,8 +34,7 @@ public:
     void resume();
     bool isPaused();
 
-    size_t getTaskCount() const;
-    TaskContext* getTaskAt(size_t index);
+    Trace* getTrace();
 
 protected:
     virtual void handleTaskEnd(TaskContext* context, int exitCode);
@@ -45,7 +45,7 @@ protected:
     virtual Task createTask(uint32_t pid) = 0;
 
     uint32_t interval;
-    std::vector<std::unique_ptr<TaskContext>> tasks;
+    std::unique_ptr<Trace> trace;
     std::vector<int> activeTasks;
     std::atomic<bool> paused { false };
 

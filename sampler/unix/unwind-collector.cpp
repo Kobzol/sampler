@@ -38,7 +38,7 @@ void UnwindCollector::collect()
 
             auto location = this->resolver.resolve((void*) pc);
             auto name = this->demangler.demangle(nameBuffer);
-            records.emplace_back(name, location, (void*) pc, timestamp);
+            records.emplace_back(name, location, (void*) pc);
         }
 
         if (unw_step(&cursor) < 0)
@@ -48,5 +48,5 @@ void UnwindCollector::collect()
     }
 
     std::reverse(records.begin(), records.end());
-    this->addTrace(StackTrace(records));
+    this->addTrace(StackTrace(records, timestamp));
 }

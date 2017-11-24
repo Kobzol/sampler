@@ -1,7 +1,7 @@
 #include "functionrecord.h"
 
-FunctionRecord::FunctionRecord(std::string name, std::string location, void* address, size_t timestamp)
-        : name(std::move(name)), location(std::move(location)), address(address), timestamp(timestamp)
+FunctionRecord::FunctionRecord(std::string name, std::string location, void* address)
+        : name(std::move(name)), location(std::move(location)), address(address)
 {
 
 }
@@ -19,9 +19,4 @@ const std::string& FunctionRecord::getLocation() const
 void* FunctionRecord::getAddress() const
 {
     return address;
-}
-
-size_t FunctionRecord::getTimestamp() const
-{
-    return timestamp;
 }

@@ -1,13 +1,10 @@
 #include "MainWindow.h"
 #include "command-bar/CommandBar.h"
 #include "../utility/Utility.h"
-#include "trace/topdown/TopdownTreeView.h"
 
 #include <QMenuBar>
 #include <QApplication>
 #include <QStatusBar>
-#include <export/flamechart-exporter.h>
-#include <fstream>
 
 MainWindow::MainWindow(SamplerManager& samplerManager): samplerManager(samplerManager)
 {
@@ -18,22 +15,6 @@ MainWindow::MainWindow(SamplerManager& samplerManager): samplerManager(samplerMa
 
     this->createMenu();
     this->createContent();
-
-    samplerManager.onSamplerEvent().subscribe([this](SamplingEvent event, TaskContext* task) {
-        if (event == SamplingEvent::Exit)
-        {
-            auto& ctx = *this->samplerManager.getSampler()->getTaskAt(0);
-            this->topdownTree->displayTask(ctx);
-            FlameChartExporter exporter;
-            auto lines = exporter.createCondensedFrames(ctx);
-            std::ofstream fs("samples.txt");
-            for (auto& line: lines)
-            {
-                fs << line << std::endl;
-            }
-            fs.close();
-        }
-    });
 }
 
 void MainWindow::handleMenuExit()
@@ -61,9 +42,9 @@ void MainWindow::createContent()
     auto* layout = new QVBoxLayout();
     widget->setLayout(layout);
 
-    this->topdownTree = new TopdownTreeView();
+    this->traceView = new TraceView(this->samplerManager);
 
     layout->setMargin(5);
     layout->addWidget(new CommandBar(this->samplerManager));
-    layout->addWidget(this->topdownTree);
+    layout->addWidget(this->traceView);
 }

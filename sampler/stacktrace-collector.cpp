@@ -5,7 +5,7 @@ StacktraceCollector::StacktraceCollector(uint32_t pid, uint32_t stackLimit): pid
 
 }
 
-const std::vector<StackTrace>& StacktraceCollector::getTraces() const
+const std::vector<StackTrace>& StacktraceCollector::getSamples() const
 {
     return this->traces;
 }

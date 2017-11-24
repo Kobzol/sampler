@@ -1,7 +1,5 @@
 #include "ptrace-sampler.h"
 #include "utility/utility.h"
-#include "unwind-collector.h"
-#include "../taskcontext.h"
 #include "../sleeptimer.h"
 
 #include <cstring>
@@ -117,6 +115,7 @@ void PtraceSampler::spawn(
 
 void PtraceSampler::initializeProcess(uint32_t pid)
 {
+    this->trace->start();
     this->onEvent(SamplingEvent::Start, nullptr);
 
     this->resolver = std::make_unique<AddrlineResolver>(pid);
@@ -157,7 +156,7 @@ void PtraceSampler::loop()
             for (int i = 0; i < count; i++)
             {
                 int taskIndex = this->activeTasks[i];
-                auto* task = this->tasks[taskIndex].get();
+                auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
 
                 if (task->getTask().isActive())
                 {
@@ -187,6 +186,8 @@ void PtraceSampler::loop()
     }
 
     this->disconnect();
+
+    this->trace->end();
     this->onEvent(SamplingEvent::Exit, nullptr);
 }
 
@@ -194,7 +195,7 @@ void PtraceSampler::stopTasks()
 {
     for (int taskIndex: this->activeTasks)
     {
-        auto* task = this->tasks[taskIndex].get();
+        auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
         long ret = ptrace(PTRACE_INTERRUPT, task->getTask().getPid(), nullptr, nullptr);
 
         if (ret < 0 && errno == ESRCH)
@@ -220,7 +221,7 @@ void PtraceSampler::disconnect()
 
     for (int taskIndex: this->activeTasks)
     {
-        auto* task = this->tasks[taskIndex].get();
+        auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
         if (task->getTask().isActive())
         {
             int status;

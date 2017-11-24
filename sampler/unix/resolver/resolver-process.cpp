@@ -29,7 +29,6 @@ ResolverProcess::ResolverProcess(std::string executable, bool library, size_t st
                 "-C",
                 "-e",
                 executable.c_str(),
-                "-f",
                 "-p"
         };
 
