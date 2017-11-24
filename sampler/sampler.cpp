@@ -29,7 +29,7 @@ void Sampler::handleTaskEnd(TaskContext* context, int exitCode)
 TaskContext* Sampler::handleTaskCreate(uint32_t pid)
 {
     this->trace->addTask(std::make_unique<TaskContext>(this->createTask(pid), this->createCollector(pid)));
-    this->activeTasks.push_back(static_cast<int>(this->trace->getTaskCount() - 1));
+    this->activeTasks[this->activeIndex].push_back(static_cast<int>(this->trace->getTaskCount() - 1));
 
     auto* task = this->trace->getTaskAt(this->trace->getTaskCount() - 1);
     this->onEvent(SamplingEvent::TaskCreate, task);

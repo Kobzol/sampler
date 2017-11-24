@@ -9,19 +9,21 @@ UnwindCollector::UnwindCollector(uint32_t pid, uint32_t stackLimit, AddrlineReso
         : StacktraceCollector(pid, stackLimit), resolver(resolver)
 {
     this->context = _UPT_create(pid);
+    this->space = unw_create_addr_space(&_UPT_accessors, 0);
+    unw_set_caching_policy(this->space, UNW_CACHE_PER_THREAD);
 }
 
 UnwindCollector::~UnwindCollector()
 {
     _UPT_destroy(this->context);
+    unw_destroy_addr_space(this->space);
 }
 
 void UnwindCollector::collect()
 {
     unw_cursor_t cursor{};
-    unw_addr_space_t space = unw_create_addr_space(&_UPT_accessors, 0);
 
-    int rc = unw_init_remote(&cursor, space, this->context);
+    int rc = unw_init_remote(&cursor, this->space, this->context);
     size_t timestamp = getTimestamp();
 
     std::vector<FunctionRecord> records;

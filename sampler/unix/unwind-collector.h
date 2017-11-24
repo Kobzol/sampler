@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <cstdint>
 #include <unordered_map>
+#include <libunwind.h>
 
 #include "demangler.h"
 #include "../functionrecord.h"
@@ -22,4 +23,5 @@ private:
     AddrlineResolver& resolver;
 
     void* context = nullptr;
+    unw_addr_space_t space;
 };

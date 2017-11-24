@@ -46,7 +46,9 @@ protected:
 
     uint32_t interval;
     std::unique_ptr<Trace> trace;
-    std::vector<int> activeTasks;
+
+    int activeIndex = 0;
+    std::vector<int> activeTasks[2];
     std::atomic<bool> paused { false };
 
     std::function<void(SamplingEvent, TaskContext*)> onEvent = [](SamplingEvent, TaskContext*){ };

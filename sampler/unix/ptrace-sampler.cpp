@@ -1,6 +1,7 @@
 #include "ptrace-sampler.h"
 #include "utility/utility.h"
 #include "../sleeptimer.h"
+#include "ptrace-collector.h"
 
 #include <cstring>
 #include <cassert>
@@ -146,7 +147,8 @@ void PtraceSampler::createTasks()
 void PtraceSampler::loop()
 {
     Sleeptimer timer(this->interval);
-    while (this->running && !this->activeTasks.empty())
+
+    while (this->running && !this->activeTasks[this->activeIndex].empty())
     {
         timer.mark();
 
@@ -154,11 +156,13 @@ void PtraceSampler::loop()
         {
             this->stopTasks();
 
-            std::vector<int> nextTasks;
-            size_t count = this->activeTasks.size();
+            auto& currentTasks = this->activeTasks[this->activeIndex];
+            auto& nextTasks = this->activeTasks[1 - this->activeIndex];
+
+            size_t count = currentTasks.size();
             for (int i = 0; i < count; i++)
             {
-                int taskIndex = this->activeTasks[i];
+                int taskIndex = currentTasks[i];
                 auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
 
                 if (task->getTask().isActive())
@@ -177,12 +181,14 @@ void PtraceSampler::loop()
             }
 
             // add newly created tasks
-            for (size_t i = count; i < this->activeTasks.size(); i++)
+            size_t newCount = currentTasks.size();
+            for (size_t i = count; i < newCount; i++)
             {
-                nextTasks.push_back(this->activeTasks[i]);
+                nextTasks.push_back(currentTasks[i]);
             }
 
-            this->activeTasks = std::move(nextTasks);
+            currentTasks.clear();
+            this->activeIndex = 1 - this->activeIndex;
         }
 
         timer.sleep();
@@ -196,7 +202,7 @@ void PtraceSampler::loop()
 
 void PtraceSampler::stopTasks()
 {
-    for (int taskIndex: this->activeTasks)
+    for (int taskIndex: this->activeTasks[this->activeIndex])
     {
         auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
         long ret = ptrace(PTRACE_INTERRUPT, task->getTask().getPid(), nullptr, nullptr);
@@ -222,7 +228,7 @@ void PtraceSampler::disconnect()
 {
     this->stopTasks();
 
-    for (int taskIndex: this->activeTasks)
+    for (int taskIndex: this->activeTasks[this->activeIndex])
     {
         auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
         if (task->getTask().isActive())
@@ -236,7 +242,7 @@ void PtraceSampler::disconnect()
         }
     }
 
-    this->activeTasks.clear();
+    this->activeTasks[this->activeIndex].clear();
 
     if (this->resolver)
     {
@@ -261,19 +267,19 @@ bool PtraceSampler::checkStopSignal(TaskContext* context, int status)
     if (this->checkNewTask(context, status))
     {
         this->restartRepeatedly(context->getTask().getPid(), context, 0);
-        return false;
+        return true;
     }
 
     if (WIFEXITED(status))
     {
         this->handleTaskEnd(context, static_cast<uint32_t>(WEXITSTATUS(status)));
-        return true;
+        return false;
     }
 
     if (WIFSIGNALED(status))
     {
         this->handleTaskEnd(context, static_cast<uint32_t>(WTERMSIG(status)));
-        return true;
+        return false;
     }
 
     if (WIFSTOPPED(status) && ((status >> 16) == PTRACE_EVENT_STOP)) // expected stop
@@ -285,7 +291,7 @@ bool PtraceSampler::checkStopSignal(TaskContext* context, int status)
 
     this->restartRepeatedly(context->getTask().getPid(),
                             context, WIFSIGNALED(status) ? WTERMSIG(status) : WSTOPSIG(status));
-    return false;
+    return true;
 }
 bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 {

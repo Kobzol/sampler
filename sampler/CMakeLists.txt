@@ -18,6 +18,7 @@ if (UNIX)
     set(PLATFORM_FILES
             unix/ptrace-sampler.cpp
             unix/unwind-collector.cpp
+            unix/ptrace-collector.cpp
             unix/demangler.cpp
             unix/utility/utility.cpp
             unix/utility/map-segment.cpp
@@ -29,7 +30,7 @@ elseif (WIN32)
     set(PLATFORM_FILES
             win32/debugevent-sampler.cpp
             win32/stackwalk-collector.cpp
-)
+    )
 endif()
 
 add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES})
