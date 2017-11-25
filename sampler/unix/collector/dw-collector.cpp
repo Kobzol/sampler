@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "dw-collector.h"
 #include "../utility/utility.h"
 
@@ -78,5 +79,7 @@ void DWCollector::collect()
     size_t timestamp = getTimestamp();
     this->frameContext->frames.clear();
     DWFL_CHECK(dwfl_getthread_frames(this->dwfl, this->pid, handleFrame, this->frameContext.get()), 0);
+
+    std::reverse(this->frameContext->frames.begin(), this->frameContext->frames.end());
     this->addTrace(StackTrace(this->frameContext->frames, timestamp));
 }
