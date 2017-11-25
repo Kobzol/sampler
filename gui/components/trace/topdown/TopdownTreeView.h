@@ -18,7 +18,6 @@ public:
 
 private:
     TreeModel* model;
-    QSortFilterProxyModel* sortmodel;
     QTreeView* treeView;
 
     std::vector<std::string> headers {"Function", "Samples #", "Samples %", "Location" };

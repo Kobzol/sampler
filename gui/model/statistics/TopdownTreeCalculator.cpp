@@ -41,12 +41,22 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
 
         if (counts.empty()) break;
 
-        std::unordered_map<std::string, TreeItem*> nextParents;
-        for (auto& kv: counts)
+        std::vector<CallRecord> orderedCounts(counts.size());
+        for (auto& kv : counts)
         {
-            auto* item = new TreeItem(callback(kv.second));
-            parents[kv.second.parent]->addChild(item);
-            nextParents.insert({ kv.second.function, item });
+            orderedCounts.push_back(kv.second);
+        }
+
+        std::sort(orderedCounts.begin(), orderedCounts.end(), [](const CallRecord& p1, const CallRecord& p2) {
+            return p1.samples >= p2.samples;
+        });
+
+        std::unordered_map<std::string, TreeItem*> nextParents;
+        for (auto& record: orderedCounts)
+        {
+            auto* item = new TreeItem(callback(record));
+            parents[record.parent]->addChild(item);
+            nextParents.insert({ record.function, item });
         }
 
         parents = std::move(nextParents);

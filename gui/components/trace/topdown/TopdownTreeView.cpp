@@ -13,12 +13,9 @@ TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
 
     this->model = new TreeModel(std::make_unique<TreeItem>(this->headers));
 
-    this->sortmodel = new QSortFilterProxyModel();
-    this->sortmodel->setSourceModel(this->model);
-
     this->treeView = new QTreeView();
-    this->treeView->setModel(this->sortmodel);
-    this->treeView->setSortingEnabled(true);
+    this->treeView->setModel(this->model);
+    this->treeView->setSortingEnabled(false);
     this->treeView->setUniformRowHeights(true);
     this->treeView->setColumnWidth(0, 400);
 
@@ -29,7 +26,7 @@ void TopdownTreeView::displayTask(TaskContext& task)
 {
     QtConcurrent::run([this, &task]() {
         TopdownTreeCalculator calculator;
-        auto root = std::make_unique<TreeItem>(this->headers);
+        auto* root = new TreeItem(this->headers);
 
         size_t totalSamples = task.getCollector().getSamples().size();
         calculator.createTopdownTree(task, *root, [totalSamples](const TopdownTreeCalculator::CallRecord& record) {
@@ -46,10 +43,8 @@ void TopdownTreeView::displayTask(TaskContext& task)
             };
         });
 
-        auto* ptr = root.release();
-        runOnUi(this, [this, ptr]() {
-            this->model->replaceRoot(std::unique_ptr<TreeItem>(ptr));
-            this->treeView->setModel(this->sortmodel);
+        runOnUi(this, [this, root]() {
+            this->model->replaceRoot(std::unique_ptr<TreeItem>(root));
         });
     });
 }
