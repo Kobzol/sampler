@@ -54,7 +54,7 @@ void MainWindow::createContent()
     this->traceView = new TraceView(this->samplerManager);
 
     layout->setMargin(5);
-    layout->addWidget(new CommandBar(this->samplerManager));
+    layout->addWidget(new CommandBar(this->samplerManager, this->settingsManager));
     layout->addWidget(this->traceView);
 }
 

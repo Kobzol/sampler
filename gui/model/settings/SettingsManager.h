@@ -11,8 +11,8 @@ public:
     SettingsManager operator=(const SettingsManager& other) = delete;
     SettingsManager(const SettingsManager&& other) = delete;
 
-    int getSamplingRate() const;
-    void setSamplingRate(int value);
+    uint32_t getSamplingRate() const;
+    void setSamplingRate(uint32_t value);
 
 private:
     QSettings& settings;

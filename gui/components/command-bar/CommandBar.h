@@ -7,13 +7,14 @@
 #include "../../model/sampler/SamplerManager.h"
 #include "../../model/util/event/subscription-manager.h"
 #include "../../model/sampler/StartInfo.h"
+#include "../../model/settings/SettingsManager.h"
 
 class CommandBar : public QWidget
 {
 Q_OBJECT
 
 public:
-    explicit CommandBar(SamplerManager& samplerManager);
+    explicit CommandBar(SamplerManager& samplerManager, SettingsManager& settingsManager);
 
 private slots:
     void showAttachDialog();
@@ -42,5 +43,7 @@ private:
     std::vector<std::string> environment;
 
     SubscriptionManager subManager;
+
     SamplerManager& samplerManager;
+    SettingsManager& settingsManager;
 };

@@ -7,7 +7,8 @@
 #include "RunProgramDialog.h"
 #include "../../utility/Utility.h"
 
-CommandBar::CommandBar(SamplerManager& samplerManager): samplerManager(samplerManager)
+CommandBar::CommandBar(SamplerManager& samplerManager, SettingsManager& settingsManager)
+        : samplerManager(samplerManager), settingsManager(settingsManager)
 {
     auto* layout = new QHBoxLayout();
     this->setLayout(layout);
@@ -120,7 +121,7 @@ void CommandBar::handleSamplerEvent(SamplingEvent event, TaskContext* task)
 
 void CommandBar::startSampler(std::unique_ptr<StartInfo> startInfo)
 {
-    this->samplerManager.startSampler(20, std::move(startInfo));
+    this->samplerManager.startSampler(this->settingsManager.getSamplingRate(), std::move(startInfo));
 }
 
 void CommandBar::handleKill()
