@@ -12,7 +12,7 @@ class TopdownTreeView: public QWidget
 {
     Q_OBJECT
 public:
-    explicit TopdownTreeView();
+    explicit TopdownTreeView(QWidget* parent = nullptr);
 
     void displayTask(TaskContext& task);
 

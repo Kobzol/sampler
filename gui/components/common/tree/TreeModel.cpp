@@ -75,17 +75,13 @@ int TreeModel::columnCount(const QModelIndex &parent) const
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid())
+    if (index.isValid() && (role == Qt::ItemDataRole::ToolTipRole ||
+                            role == Qt::ItemDataRole::DisplayRole))
     {
-        return QVariant();
+        return QString::fromStdString(static_cast<TreeItem*>(index.internalPointer())->data(index.column()));
     }
 
-    if (role != Qt::DisplayRole)
-    {
-        return QVariant();
-    }
-
-    return QString::fromStdString(static_cast<TreeItem*>(index.internalPointer())->data(index.column()));
+    return QVariant();
 }
 
 Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const

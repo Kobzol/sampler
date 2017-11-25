@@ -25,7 +25,7 @@ set(SOURCE_FILES
         model/statistics/TopdownTreeCalculator.cpp
         components/trace/TraceView.cpp
         components/trace/topdown/TopdownGroupView.cpp
-)
+        components/trace/export/ExportView.cpp components/trace/export/ExportView.h)
 
 add_executable(gui ${SOURCE_FILES})
 target_link_libraries(gui sampler Qt5::Widgets ${PLATFORM_LIBS})

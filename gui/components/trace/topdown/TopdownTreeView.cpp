@@ -4,7 +4,7 @@
 #include <QVBoxLayout>
 #include <sstream>
 
-TopdownTreeView::TopdownTreeView()
+TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
 {
     auto* layout = new QVBoxLayout();
     this->setLayout(layout);
