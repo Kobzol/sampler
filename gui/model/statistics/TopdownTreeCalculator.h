@@ -12,6 +12,7 @@ public:
         std::string function = "";
         std::string location = "";
         size_t samples = 0;
+        size_t ownSamples = 0;
     };
 
     void createTopdownTree(TaskContext& context, TreeItem& root,

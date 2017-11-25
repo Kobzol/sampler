@@ -36,6 +36,10 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
                 }
 
                 it->second.samples++;
+                if (stackLevel == functions.size() - 1)
+                {
+                    it->second.ownSamples++;
+                }
             }
         }
 

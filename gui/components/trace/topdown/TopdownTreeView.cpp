@@ -38,6 +38,7 @@ void TopdownTreeView::displayTask(TaskContext& task)
             return std::vector<std::string> {
                     record.function,
                     std::to_string(record.samples),
+                    std::to_string(record.ownSamples),
                     ss.str(),
                     record.location
             };
