@@ -41,7 +41,8 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
 
         if (counts.empty()) break;
 
-        std::vector<CallRecord> orderedCounts(counts.size());
+        std::vector<CallRecord> orderedCounts;
+        orderedCounts.reserve(counts.size());
         for (auto& kv : counts)
         {
             orderedCounts.push_back(kv.second);
