@@ -1,6 +1,4 @@
 #include <QApplication>
-#include <memory>
-#include <iostream>
 
 #include "components/MainWindow.h"
 
@@ -9,9 +7,12 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     // create services
-    auto samplerManager = std::make_unique<SamplerManager>();
+    QSettings settings("cz.beranek", "sampler");
 
-    MainWindow window(*samplerManager);
+    SamplerManager samplerManager;
+    SettingsManager settingsManager(settings);
+
+    MainWindow window(samplerManager, settingsManager);
     window.show();
 
     return app.exec();

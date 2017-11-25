@@ -1,12 +1,14 @@
 #include "MainWindow.h"
 #include "command-bar/CommandBar.h"
 #include "../utility/Utility.h"
+#include "settings/SettingsDialog.h"
 
 #include <QMenuBar>
 #include <QApplication>
 #include <QStatusBar>
 
-MainWindow::MainWindow(SamplerManager& samplerManager): samplerManager(samplerManager)
+MainWindow::MainWindow(SamplerManager& samplerManager, SettingsManager& settingsManager)
+        : samplerManager(samplerManager), settingsManager(settingsManager)
 {
     this->setWindowTitle("Profiler");
     this->setMinimumSize(800, 600);
@@ -26,6 +28,13 @@ void MainWindow::createMenu()
 {
     // File
     auto* fileMenu = this->menuBar()->addMenu("File");
+
+    auto* settingsAction = new QAction("&Settings", this);
+    settingsAction->setShortcuts(QKeySequence::Preferences);
+    settingsAction->setStatusTip("Settings");
+    this->connect(settingsAction, &QAction::triggered, this, &MainWindow::handleMenuSettings);
+    fileMenu->addAction(settingsAction);
+    fileMenu->addSeparator();
 
     auto* exitAction = new QAction("&Exit", this);
     exitAction->setShortcuts(QKeySequence::Quit);
@@ -47,4 +56,10 @@ void MainWindow::createContent()
     layout->setMargin(5);
     layout->addWidget(new CommandBar(this->samplerManager));
     layout->addWidget(this->traceView);
+}
+
+void MainWindow::handleMenuSettings()
+{
+    auto* settingsDialog = new SettingsDialog(this->settingsManager);
+    settingsDialog->exec();
 }

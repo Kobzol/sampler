@@ -20,16 +20,18 @@ set(SOURCE_FILES
         components/trace/TraceView.cpp
         components/trace/topdown/TopdownGroupView.cpp
         components/trace/export/ExportView.cpp
+        components/settings/SettingsDialog.cpp
         model/process/ProcessLister.cpp
         model/process/Process.cpp
         model/sampler/SamplerManager.cpp
         model/util/event/event-broadcaster.h
         model/util/event/subscription-manager.cpp
         model/sampler/StartInfo.cpp
+        model/settings/SettingsManager.cpp
         model/statistics/TopdownTreeCalculator.cpp
         utility/Utility.cpp
 )
 
 add_executable(gui ${SOURCE_FILES})
-target_link_libraries(gui sampler Qt5::Widgets ${PLATFORM_LIBS})
+target_link_libraries(gui sampler Qt5::Widgets Qt5::Concurrent ${PLATFORM_LIBS})
 target_include_directories(gui PRIVATE ${Qt5_INCLUDE_DIRS} "../sampler")
