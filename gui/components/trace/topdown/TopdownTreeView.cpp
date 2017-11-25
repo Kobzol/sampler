@@ -1,7 +1,9 @@
 #include "TopdownTreeView.h"
 #include "../../../model/statistics/TopdownTreeCalculator.h"
+#include "../../../utility/Utility.h"
 
 #include <QVBoxLayout>
+#include <QtConcurrent>
 #include <sstream>
 
 TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
@@ -25,24 +27,29 @@ TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
 
 void TopdownTreeView::displayTask(TaskContext& task)
 {
-    TopdownTreeCalculator calculator;
-    auto root = std::make_unique<TreeItem>(this->headers);
+    QtConcurrent::run([this, &task]() {
+        TopdownTreeCalculator calculator;
+        auto root = std::make_unique<TreeItem>(this->headers);
 
-    size_t totalSamples = task.getCollector().getSamples().size();
-    calculator.createTopdownTree(task, *root, [totalSamples](const TopdownTreeCalculator::CallRecord& record) {
-        std::stringstream ss;
-        ss << std::fixed;
-        ss.precision(2);
-        ss << ((double) record.samples / totalSamples) * 100.0 << " %";
+        size_t totalSamples = task.getCollector().getSamples().size();
+        calculator.createTopdownTree(task, *root, [totalSamples](const TopdownTreeCalculator::CallRecord& record) {
+            std::stringstream ss;
+            ss << std::fixed;
+            ss.precision(2);
+            ss << ((double) record.samples / totalSamples) * 100.0 << " %";
 
-        return std::vector<std::string> {
-                record.function,
-                std::to_string(record.samples),
-                ss.str(),
-                record.location
-        };
+            return std::vector<std::string> {
+                    record.function,
+                    std::to_string(record.samples),
+                    ss.str(),
+                    record.location
+            };
+        });
+
+        auto* ptr = root.release();
+        runOnUi(this, [this, ptr]() {
+            this->model->replaceRoot(std::unique_ptr<TreeItem>(ptr));
+            this->treeView->setModel(this->sortmodel);
+        });
     });
-
-    this->model->replaceRoot(std::move(root));
-    this->treeView->setModel(this->sortmodel);
 }
