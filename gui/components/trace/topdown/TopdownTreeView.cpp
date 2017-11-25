@@ -1,10 +1,10 @@
 #include "TopdownTreeView.h"
 #include "../../../model/statistics/TopdownTreeCalculator.h"
 #include "../../../utility/Utility.h"
+#include "ProgressDelegate.h"
 
 #include <QVBoxLayout>
 #include <QtConcurrent>
-#include <sstream>
 
 TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
 {
@@ -18,6 +18,7 @@ TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
     this->treeView->setSortingEnabled(false);
     this->treeView->setUniformRowHeights(true);
     this->treeView->setColumnWidth(0, 400);
+    this->treeView->setItemDelegateForColumn(3, new ProgressDelegate(this->model));
 
     layout->addWidget(this->treeView);
 }
@@ -30,16 +31,13 @@ void TopdownTreeView::displayTask(TaskContext& task)
 
         size_t totalSamples = task.getCollector().getSamples().size();
         calculator.createTopdownTree(task, *root, [totalSamples](const TopdownTreeCalculator::CallRecord& record) {
-            std::stringstream ss;
-            ss << std::fixed;
-            ss.precision(2);
-            ss << ((double) record.samples / totalSamples) * 100.0 << " %";
+            double percent = ((double) record.samples / totalSamples) * 100.0;
 
             return std::vector<std::string> {
                     record.function,
                     std::to_string(record.samples),
                     std::to_string(record.ownSamples),
-                    ss.str(),
+                    std::to_string((int) percent),
                     record.location
             };
         });

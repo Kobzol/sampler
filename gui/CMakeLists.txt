@@ -30,7 +30,7 @@ set(SOURCE_FILES
         model/settings/SettingsManager.cpp
         model/statistics/TopdownTreeCalculator.cpp
         utility/Utility.cpp
-)
+        components/trace/topdown/ProgressDelegate.cpp components/trace/topdown/ProgressDelegate.h)
 
 add_executable(gui ${SOURCE_FILES})
 target_link_libraries(gui sampler Qt5::Widgets Qt5::Concurrent ${PLATFORM_LIBS})
