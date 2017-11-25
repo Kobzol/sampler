@@ -6,7 +6,7 @@
 #include "../sampling-event.h"
 #include "../task.h"
 #include "../taskcontext.h"
-#include "unwind-collector.h"
+#include "resolver/addrline-resolver.h"
 
 class PtraceSampler: public Sampler
 {
@@ -29,6 +29,7 @@ protected:
 
 private:
     void createTasks();
+    void stopTask(TaskContext& task);
     void stopTasks();
     void loop();
     void disconnect();
@@ -44,7 +45,6 @@ private:
 
     uint32_t pid;
 
-    std::unique_ptr<AddrlineResolver> resolver;
     std::atomic<bool> running{false};
     std::thread loopThread;
 };

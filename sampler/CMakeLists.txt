@@ -17,8 +17,9 @@ set(SOURCE_FILES
 if (UNIX)
     set(PLATFORM_FILES
             unix/ptrace-sampler.cpp
-            unix/unwind-collector.cpp
-            unix/ptrace-collector.cpp
+            unix/collector/unwind-collector.cpp
+            unix/collector/ptrace-collector.cpp
+            unix/collector/dw-collector.cpp
             unix/demangler.cpp
             unix/utility/utility.cpp
             unix/utility/map-segment.cpp

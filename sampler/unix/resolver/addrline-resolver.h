@@ -12,10 +12,13 @@ class AddrlineResolver
 {
 public:
     explicit AddrlineResolver(pid_t pid);
+    ~AddrlineResolver();
+
+    AddrlineResolver(const AddrlineResolver& other) = delete;
+    AddrlineResolver operator=(const AddrlineResolver& other) = delete;
+    AddrlineResolver(const AddrlineResolver&& other) = delete;
 
     std::string resolve(void* address);
-
-    void shutdown();
 
 private:
     std::string getFromProcesses(void* address);

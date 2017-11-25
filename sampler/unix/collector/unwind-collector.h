@@ -5,10 +5,10 @@
 #include <unordered_map>
 #include <libunwind.h>
 
-#include "demangler.h"
-#include "../functionrecord.h"
-#include "../stacktrace-collector.h"
-#include "resolver/addrline-resolver.h"
+#include "../demangler.h"
+#include "../../functionrecord.h"
+#include "../../stacktrace-collector.h"
+#include "../resolver/addrline-resolver.h"
 
 class UnwindCollector: public StacktraceCollector
 {

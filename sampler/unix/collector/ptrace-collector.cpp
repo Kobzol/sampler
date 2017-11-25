@@ -1,9 +1,9 @@
 #include "ptrace-collector.h"
-#include "utility/utility.h"
-#include <sys/user.h>
-#include <sys/ptrace.h>
+#include "../utility/utility.h"
 #include <cstring>
 #include <algorithm>
+#include <sys/ptrace.h>
+#include <sys/user.h>
 
 PtraceCollector::PtraceCollector(uint32_t pid, uint32_t stackLimit, AddrlineResolver& resolver)
         : StacktraceCollector(pid, stackLimit), resolver(resolver)

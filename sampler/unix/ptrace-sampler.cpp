@@ -1,7 +1,7 @@
 #include "ptrace-sampler.h"
 #include "utility/utility.h"
 #include "../sleeptimer.h"
-#include "ptrace-collector.h"
+#include "collector/dw-collector.h"
 
 #include <cstring>
 #include <cassert>
@@ -122,8 +122,6 @@ void PtraceSampler::initializeProcess(uint32_t pid)
     this->trace->start();
     this->onEvent(SamplingEvent::Start, nullptr);
 
-    this->resolver = std::make_unique<AddrlineResolver>(pid);
-
     this->handleTaskCreate(pid);
     this->createTasks();
     this->loop();
@@ -200,17 +198,22 @@ void PtraceSampler::loop()
     this->onEvent(SamplingEvent::Exit, nullptr);
 }
 
+void PtraceSampler::stopTask(TaskContext& task)
+{
+    long ret = ptrace(PTRACE_INTERRUPT, task.getTask().getPid(), nullptr, nullptr);
+    LOG_ERROR(ret);
+
+    if (ret < 0 && errno == ESRCH)
+    {
+        this->handleTaskEnd(&task, -1);
+    }
+}
 void PtraceSampler::stopTasks()
 {
     for (int taskIndex: this->activeTasks[this->activeIndex])
     {
         auto* task = this->trace->getTaskAt(static_cast<size_t>(taskIndex));
-        long ret = ptrace(PTRACE_INTERRUPT, task->getTask().getPid(), nullptr, nullptr);
-
-        if (ret < 0 && errno == ESRCH)
-        {
-            this->handleTaskEnd(task, -1);
-        }
+        this->stopTask(*task);
     }
 }
 
@@ -243,12 +246,6 @@ void PtraceSampler::disconnect()
     }
 
     this->activeTasks[this->activeIndex].clear();
-
-    if (this->resolver)
-    {
-        this->resolver->shutdown();
-        this->resolver.release();
-    }
 
     this->resume();
 }
@@ -302,7 +299,7 @@ bool PtraceSampler::checkNewTask(TaskContext* context, int status)
         unsigned long pid;
         this->unwrapLibc(ptrace(PTRACE_GETEVENTMSG, context->getTask().getPid(), nullptr, &pid),
                          "Couldn't attach to new process thread");
-        
+
         this->handleTaskCreate(pid);
         return true;
     }
@@ -311,7 +308,7 @@ bool PtraceSampler::checkNewTask(TaskContext* context, int status)
 
 std::unique_ptr<StacktraceCollector> PtraceSampler::createCollector(uint32_t pid)
 {
-    return std::make_unique<UnwindCollector>(pid, 32, *this->resolver);
+    return std::make_unique<DWCollector>(pid, 32);
 }
 
 void PtraceSampler::unwrapLibc(long ret, const std::string& message)

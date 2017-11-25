@@ -8,8 +8,7 @@ AddrlineResolver::AddrlineResolver(pid_t pid)
 {
     this->loadResolvers(pid);
 }
-
-void AddrlineResolver::shutdown()
+AddrlineResolver::~AddrlineResolver()
 {
     for (auto& process: this->processes)
     {
