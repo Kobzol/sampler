@@ -18,6 +18,7 @@ SettingsDialog::SettingsDialog(SettingsManager& settingsManager): settingsManage
 
     auto* buttons = new QDialogButtonBox(this);
     auto* ok = buttons->addButton(QDialogButtonBox::StandardButton::Ok);
+    ok->setText("Save");
     this->connect(ok, &QPushButton::clicked, this, &QDialog::accept);
 
     auto* cancel = buttons->addButton(QDialogButtonBox::StandardButton::Cancel);
@@ -30,7 +31,7 @@ void SettingsDialog::accept()
 {
     if (this->validate(this->samplingRate))
     {
-        this->settingsManager.setSamplingRate(this->samplingRate->text().toInt());
+        this->settingsManager.setSamplingRate(this->samplingRate->text().toUInt());
     }
     else
     {

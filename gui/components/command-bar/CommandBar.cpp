@@ -18,21 +18,21 @@ CommandBar::CommandBar(SamplerManager& samplerManager, SettingsManager& settings
 }
 void CommandBar::createButtons(QHBoxLayout* layout)
 {
-    this->attachButton = this->createCommandButton(layout, "Attach to process", 0, &CommandBar::showAttachDialog);
+    this->attachButton = this->createCommandButton(layout, "&Attach to process", 0, &CommandBar::showAttachDialog);
     this->attachButton->setStatusTip("Attach to a running process");
 
-    this->runProgramButton = this->createCommandButton(layout, "Run program", 0, &CommandBar::showRunProgramDialog);
+    this->runProgramButton = this->createCommandButton(layout, "&Run program", 0, &CommandBar::showRunProgramDialog);
     this->runProgramButton->setStatusTip("Run and profile a program executable");
 
-    this->detachButton = this->createCommandButton(layout, "Detach", 0, &CommandBar::handleDetach);
+    this->detachButton = this->createCommandButton(layout, "&Detach", 0, &CommandBar::handleDetach);
     this->detachButton->setStatusTip("Detach from a running program");
     this->detachButton->setEnabled(false);
 
-    this->pauseResumeButton = this->createCommandButton(layout, "Pause", 0, &CommandBar::handlePauseResume);
+    this->pauseResumeButton = this->createCommandButton(layout, "&Pause", 0, &CommandBar::handlePauseResume);
     this->pauseResumeButton->setStatusTip("Pause sampling");
     this->pauseResumeButton->setEnabled(false);
 
-    this->killButton = this->createCommandButton(layout, "Kill process", 1, &CommandBar::handleKill);
+    this->killButton = this->createCommandButton(layout, "&Kill process", 1, &CommandBar::handleKill);
     this->killButton->setStatusTip("Kill profiled process");
     this->killButton->setEnabled(false);
 }
@@ -109,12 +109,12 @@ void CommandBar::handleSamplerEvent(SamplingEvent event, TaskContext* task)
 
     if (event == SamplingEvent::Start || event == SamplingEvent::Resume)
     {
-        this->pauseResumeButton->setText("Pause");
+        this->pauseResumeButton->setText("&Pause");
         this->pauseResumeButton->setStatusTip("Pause sampling");
     }
     else if (event == SamplingEvent::Pause)
     {
-        this->pauseResumeButton->setText("Resume");
+        this->pauseResumeButton->setText("&Resume");
         this->pauseResumeButton->setStatusTip("Resume sampling");
     }
 }

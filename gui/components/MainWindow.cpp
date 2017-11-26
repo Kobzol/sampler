@@ -27,20 +27,22 @@ void MainWindow::handleMenuExit()
 void MainWindow::createMenu()
 {
     // File
-    auto* fileMenu = this->menuBar()->addMenu("File");
-
-    auto* settingsAction = new QAction("&Settings", this);
-    settingsAction->setShortcuts(QKeySequence::Preferences);
-    settingsAction->setStatusTip("Settings");
-    this->connect(settingsAction, &QAction::triggered, this, &MainWindow::handleMenuSettings);
-    fileMenu->addAction(settingsAction);
-    fileMenu->addSeparator();
+    auto* fileMenu = this->menuBar()->addMenu("&File");
 
     auto* exitAction = new QAction("&Exit", this);
     exitAction->setShortcuts(QKeySequence::Quit);
     exitAction->setStatusTip("Exit profiler");
     this->connect(exitAction, &QAction::triggered, this, &MainWindow::handleMenuExit);
     fileMenu->addAction(exitAction);
+
+    // File
+    auto* editMenu = this->menuBar()->addMenu("&Edit");
+
+    auto* settingsAction = new QAction("&Settings", this);
+    settingsAction->setShortcuts(QKeySequence::Preferences);
+    settingsAction->setStatusTip("Settings");
+    this->connect(settingsAction, &QAction::triggered, this, &MainWindow::handleMenuSettings);
+    editMenu->addAction(settingsAction);
 }
 
 void MainWindow::createContent()
