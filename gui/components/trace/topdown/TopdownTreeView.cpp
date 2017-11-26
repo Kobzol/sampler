@@ -18,7 +18,7 @@ TopdownTreeView::TopdownTreeView(QWidget* parent): QWidget(parent)
     this->treeView->setSortingEnabled(false);
     this->treeView->setUniformRowHeights(true);
     this->treeView->setColumnWidth(0, 400);
-    this->treeView->setItemDelegateForColumn(3, new ProgressDelegate(this->model));
+    this->treeView->setItemDelegateForColumn(2, new ProgressDelegate(this->model));
 
     layout->addWidget(this->treeView);
 }
@@ -36,7 +36,6 @@ void TopdownTreeView::displayTask(TaskContext& task)
             return std::vector<std::string> {
                     record.function,
                     std::to_string(record.samples),
-                    std::to_string(record.ownSamples),
                     std::to_string((int) percent),
                     record.location
             };

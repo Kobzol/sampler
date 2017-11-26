@@ -11,7 +11,6 @@ void ProgressDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opti
     auto value = this->model->data(index, Qt::ItemDataRole::DisplayRole).toString().toUInt();
 
     QProgressBar progressBar;
-    progressBar.setFixedWidth(50);
     progressBar.setValue(value);
     progressBar.setMaximum(100);
 
