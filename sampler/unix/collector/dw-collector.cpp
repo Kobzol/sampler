@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstring>
+#include <sstream>
 #include "dw-collector.h"
 #include "../utility/utility.h"
 
@@ -43,22 +44,37 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
         std::string name, location;
         if (module)
         {
-            const char* resolved = dwfl_module_addrname(module, pc);
-            if (resolved != nullptr)
+            std::stringstream ss;
+            ss << (void*) module << "-" << (void*) pc;
+            auto hash = ss.str();
+
+            auto it = frameContext->moduleCache.find(hash);
+            if (it == frameContext->moduleCache.end())
             {
-                name = frameContext->demangler.demangle(resolved);
+                const char* resolved = dwfl_module_addrname(module, pc);
+                name = resolved == nullptr ? "" : frameContext->demangler.demangle(resolved);
 
-                Dwfl_Line* line = dwfl_module_getsrc(module, pc);
-                if (line != nullptr)
+                if (!name.empty())
                 {
-                    int linenum = -1;
-                    const char* file = dwfl_lineinfo(line, nullptr, &linenum, nullptr, nullptr, nullptr);
-
-                    if (file)
+                    Dwfl_Line* line = dwfl_module_getsrc(module, pc);
+                    if (line != nullptr)
                     {
-                        location = std::string(file) + ":" + std::to_string(linenum);
+                        int linenum = -1;
+                        const char* file = dwfl_lineinfo(line, nullptr, &linenum, nullptr, nullptr, nullptr);
+
+                        if (file)
+                        {
+                            location = std::string(file) + ":" + std::to_string(linenum);
+                        }
                     }
                 }
+
+                frameContext->moduleCache.insert({ hash, FunctionRecord(name, location, (void*) pc) });
+            }
+            else
+            {
+                name = it->second.getName();
+                location = it->second.getLocation();
             }
         }
 

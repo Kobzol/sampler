@@ -46,7 +46,7 @@ size_t getTimestamp()
 {
     return static_cast<size_t>(
             std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::system_clock::now().time_since_epoch()).count()
+                    std::chrono::steady_clock::now().time_since_epoch()).count()
     );
 }
 

@@ -192,9 +192,9 @@ void PtraceSampler::loop()
         timer.sleep();
     }
 
-    this->disconnect();
-
     this->trace->end();
+
+    this->disconnect();
     this->onEvent(SamplingEvent::Exit, nullptr);
 }
 

@@ -11,6 +11,7 @@ class DWCollector: public StacktraceCollector
     {
         Demangler demangler;
         std::vector<FunctionRecord> frames;
+        std::unordered_map<std::string, FunctionRecord> moduleCache;
     };
 
 public:
