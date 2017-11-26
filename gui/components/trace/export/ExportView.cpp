@@ -1,16 +1,17 @@
 #include "ExportView.h"
+#include "../../../utility/Utility.h"
+#include <export/flamechart-exporter.h>
+
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include <QtConcurrent>
 #include <fstream>
 #include <sstream>
-
-#include <export/flamechart-exporter.h>
-#include <unix/utility/utility.h>
 
 static std::vector<std::string> exportTrace(Trace* trace)
 {
     FlameChartExporter exporter;
-    size_t timestamp = getTimestamp();
+    auto timestamp = static_cast<size_t>(QDateTime::currentMSecsSinceEpoch());
     std::vector<std::string> files;
 
     for (size_t i = 0; i < trace->getTaskCount(); i++)
@@ -18,7 +19,7 @@ static std::vector<std::string> exportTrace(Trace* trace)
         TaskContext& task = *trace->getTaskAt(i);
         auto lines = exporter.createCondensedFrames(task);
 
-        std::string file = std::to_string(timestamp) + "-" + std::to_string(task.getTask().getPid()) + ".trace";
+        std::string file = std::to_string(timestamp) + "-" + std::to_string(task.getTask().getPid()) + ".flame";
         files.push_back(file);
         std::ofstream fs(file);
         for (auto& line : lines)
@@ -57,21 +58,26 @@ void ExportView::handleExportFlamechart()
 {
     if (this->trace != nullptr)
     {
-        std::vector<std::string> files = exportTrace(this->trace);
+        QtConcurrent::run([this]() {
+            std::vector<std::string> files = exportTrace(this->trace);
 
-        std::stringstream summary;
-        summary << "Generated files:" << std::endl;
+            std::stringstream summary;
+            summary << "Generated files:" << std::endl;
 
-        for (size_t i = 0; i < files.size(); i++)
-        {
-            summary << files[i];
-            if (i != files.size() - 1)
+            for (size_t i = 0; i < files.size(); i++)
             {
-                summary << std::endl;
+                summary << files[i];
+                if (i != files.size() - 1)
+                {
+                    summary << std::endl;
+                }
             }
-        }
 
-        QMessageBox::information(this, "Export successful",
-                                 QString::fromStdString(summary.str()));
+            auto str = summary.str();
+            runOnUi(this, [this, str]() {
+                QMessageBox::information(this, "Export successful",
+                                         QString::fromStdString(str));
+            });
+        });
     }
 }
