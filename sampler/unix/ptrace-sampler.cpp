@@ -237,7 +237,7 @@ void PtraceSampler::disconnect()
         if (task->getTask().isActive())
         {
             int status;
-            int ret = waitpid(task->getTask().getPid(), &status, WUNTRACED);
+            int ret = waitpid(task->getTask().getPid(), &status, WNOHANG);
             if (ret > 0)
             {
                 LOG_ERROR(ptrace(PTRACE_DETACH, task->getTask().getPid(), nullptr, 0));
