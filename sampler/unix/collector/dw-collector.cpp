@@ -63,19 +63,16 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
                     moduleName = modname;
                 }
 
-                if (!name.empty())
+                Dwfl_Line* lineentry = dwfl_module_getsrc(module, pc);
+                if (lineentry != nullptr)
                 {
-                    Dwfl_Line* lineentry = dwfl_module_getsrc(module, pc);
-                    if (lineentry != nullptr)
-                    {
-                        int linenum = -1;
-                        const char* file = dwfl_lineinfo(lineentry, nullptr, &linenum, nullptr, nullptr, nullptr);
+                    int linenum = -1;
+                    const char* file = dwfl_lineinfo(lineentry, nullptr, &linenum, nullptr, nullptr, nullptr);
 
-                        if (file)
-                        {
-                            location = std::string(file);
-                            line = static_cast<uint32_t>(linenum);
-                        }
+                    if (file != nullptr)
+                    {
+                        location = std::string(file);
+                        line = static_cast<uint32_t>(linenum);
                     }
                 }
 

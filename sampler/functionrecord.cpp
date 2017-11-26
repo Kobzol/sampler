@@ -29,7 +29,11 @@ void* FunctionRecord::getAddress() const
 
 std::string FunctionRecord::getFullLocation() const
 {
-    return this->location + ":" + std::to_string(this->line);
+    if (this->location.empty())
+    {
+        return "";
+    }
+    else return this->location + ":" + std::to_string(this->line);
 }
 
 const std::string& FunctionRecord::getModule() const
