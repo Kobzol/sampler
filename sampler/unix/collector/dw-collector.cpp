@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <cstring>
 #include "dw-collector.h"
 #include "../utility/utility.h"
 
@@ -42,10 +43,10 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
         std::string name, location;
         if (module)
         {
-            name = dwfl_module_addrname(module, pc);
-            if (!name.empty())
+            const char* resolved = dwfl_module_addrname(module, pc);
+            if (resolved != nullptr)
             {
-                name = frameContext->demangler.demangle(name);
+                name = frameContext->demangler.demangle(resolved);
 
                 Dwfl_Line* line = dwfl_module_getsrc(module, pc);
                 if (line != nullptr)
