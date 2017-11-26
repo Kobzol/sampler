@@ -24,7 +24,7 @@ void PtraceCollector::collect()
     {
         auto addr = (void*) rip;
         auto location = this->resolver.resolve(addr);
-        records.emplace_back(location, location, addr);
+        records.emplace_back(location, location, 0, addr);
 
         errno = 0;
         size_t result = ptrace(PTRACE_PEEKTEXT, this->pid, rbp + 8, 0);

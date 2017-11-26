@@ -4,14 +4,13 @@
 #include <string>
 #include <unordered_map>
 #include "../sampler.h"
+#include "exporter.h"
 
-class FlameChartExporter
+class FlameChartExporter: public Exporter
 {
 public:
-    std::vector<std::string> createCondensedFrames(TaskContext& task);
+    virtual void exportTask(TaskContext& task, std::ostream& os) override;
 
 private:
     std::string serializeFrame(const StackTrace& trace);
-
-    std::unordered_map<std::string, size_t> frameCounter;
 };

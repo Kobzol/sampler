@@ -34,4 +34,4 @@ elseif (WIN32)
     )
 endif()
 
-add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES})
+add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES} export/callgrind-exporter.cpp export/callgrind-exporter.h export/exporter.cpp export/exporter.h)

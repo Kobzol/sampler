@@ -14,26 +14,24 @@ std::string FlameChartExporter::serializeFrame(const StackTrace& trace)
     return ss.str();
 }
 
-std::vector<std::string> FlameChartExporter::createCondensedFrames(TaskContext& task)
+void FlameChartExporter::exportTask(TaskContext& task, std::ostream& os)
 {
-    std::vector<std::string> frames;
+    std::unordered_map<std::string, size_t> frameCounter;
 
     for (auto& trace: task.getCollector().getSamples())
     {
         auto serialized = this->serializeFrame(trace);
-        auto it = this->frameCounter.find(serialized);
-        if (it == this->frameCounter.end())
+        auto it = frameCounter.find(serialized);
+        if (it == frameCounter.end())
         {
-            it = this->frameCounter.insert({ serialized, 0 }).first;
+            it = frameCounter.insert({ serialized, 0 }).first;
         }
 
         it->second++;
     }
 
-    for (auto& kv: this->frameCounter)
+    for (auto& kv: frameCounter)
     {
-        frames.push_back(kv.first + " " + std::to_string(kv.second));
+        os << kv.first + " " + std::to_string(kv.second) << std::endl;
     }
-
-    return frames;
 }

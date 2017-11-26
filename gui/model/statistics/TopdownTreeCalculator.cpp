@@ -31,7 +31,7 @@ void TopdownTreeCalculator::createTopdownTree(TaskContext& context, TreeItem& ro
                 if (it == counts.end())
                 {
                     it = counts.insert({hash, CallRecord {
-                            parent, function, functions[stackLevel].getLocation(), 0
+                            parent, function, functions[stackLevel].getFullLocation(), 0
                     } }).first;
                 }
 

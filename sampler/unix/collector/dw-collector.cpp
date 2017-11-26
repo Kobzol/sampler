@@ -42,6 +42,8 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
         Dwfl_Module* module = dwfl_addrmodule(dwfl, pc);
 
         std::string name, location;
+        uint32_t line = 0;
+
         if (module)
         {
             std::stringstream ss;
@@ -56,29 +58,31 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
 
                 if (!name.empty())
                 {
-                    Dwfl_Line* line = dwfl_module_getsrc(module, pc);
-                    if (line != nullptr)
+                    Dwfl_Line* lineentry = dwfl_module_getsrc(module, pc);
+                    if (lineentry != nullptr)
                     {
                         int linenum = -1;
-                        const char* file = dwfl_lineinfo(line, nullptr, &linenum, nullptr, nullptr, nullptr);
+                        const char* file = dwfl_lineinfo(lineentry, nullptr, &linenum, nullptr, nullptr, nullptr);
 
                         if (file)
                         {
-                            location = std::string(file) + ":" + std::to_string(linenum);
+                            location = std::string(file);
+                            line = static_cast<uint32_t>(linenum);
                         }
                     }
                 }
 
-                frameContext->moduleCache.insert({ hash, FunctionRecord(name, location, (void*) pc) });
+                frameContext->moduleCache.insert({ hash, FunctionRecord(name, location, line, (void*) pc) });
             }
             else
             {
                 name = it->second.getName();
                 location = it->second.getLocation();
+                line = it->second.getLine();
             }
         }
 
-        frameContext->frames.emplace_back(name, location, (void*) pc);
+        frameContext->frames.emplace_back(name, location, line, (void*) pc);
     }
     else return DWARF_CB_ABORT;
 
