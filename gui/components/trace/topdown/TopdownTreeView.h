@@ -20,5 +20,5 @@ private:
     TreeModel* model;
     QTreeView* treeView;
 
-    std::vector<std::string> headers {"Function", "Cumul. samples #", "Cumul. %", "Location" };
+    std::vector<std::string> headers {"Function", "Cumul. samples #", "Cumul. %", "Location", "Module" };
 };

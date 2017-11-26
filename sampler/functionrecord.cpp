@@ -1,7 +1,8 @@
 #include "functionrecord.h"
 
-FunctionRecord::FunctionRecord(std::string name, std::string location, uint32_t line, void* address)
-        : name(std::move(name)), location(std::move(location)), line(line), address(address)
+FunctionRecord::FunctionRecord(std::string name, std::string location, uint32_t line,
+                               std::string module, void* address)
+        : name(std::move(name)), location(std::move(location)), line(line), module(std::move(module)), address(address)
 {
 
 }
@@ -29,4 +30,9 @@ void* FunctionRecord::getAddress() const
 std::string FunctionRecord::getFullLocation() const
 {
     return this->location + ":" + std::to_string(this->line);
+}
+
+const std::string& FunctionRecord::getModule() const
+{
+    return this->module;
 }

@@ -41,9 +41,6 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
         Dwfl* dwfl = dwfl_thread_dwfl(thread);
         Dwfl_Module* module = dwfl_addrmodule(dwfl, pc);
 
-        std::string name, location;
-        uint32_t line = 0;
-
         if (module)
         {
             std::stringstream ss;
@@ -53,8 +50,18 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
             auto it = frameContext->moduleCache.find(hash);
             if (it == frameContext->moduleCache.end())
             {
+                std::string name, location, moduleName;
+                uint32_t line = 0;
+
                 const char* resolved = dwfl_module_addrname(module, pc);
                 name = resolved == nullptr ? "" : frameContext->demangler.demangle(resolved);
+
+                const char* modname = dwfl_module_info(module, nullptr, nullptr, nullptr,
+                                                       nullptr, nullptr, nullptr, nullptr);
+                if (modname)
+                {
+                    moduleName = modname;
+                }
 
                 if (!name.empty())
                 {
@@ -72,17 +79,17 @@ int DWCollector::handleFrame(Dwfl_Frame* frame, void* arg)
                     }
                 }
 
-                frameContext->moduleCache.insert({ hash, FunctionRecord(name, location, line, (void*) pc) });
+                frameContext->moduleCache.insert({ hash,
+                                                   FunctionRecord(name, location, line, moduleName, (void*) pc) });
+                frameContext->frames.emplace_back(name, location, line, moduleName, (void*) pc);
             }
             else
             {
-                name = it->second.getName();
-                location = it->second.getLocation();
-                line = it->second.getLine();
+                frameContext->frames.emplace_back(it->second.getName(), it->second.getLocation(),
+                                                  it->second.getLine(), it->second.getModule(),
+                                                  (void*) pc);
             }
         }
-
-        frameContext->frames.emplace_back(name, location, line, (void*) pc);
     }
     else return DWARF_CB_ABORT;
 

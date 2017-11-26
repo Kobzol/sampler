@@ -41,7 +41,7 @@ void UnwindCollector::collect()
 
             auto location = this->resolver.resolve((void*) pc);
             auto name = this->demangler.demangle(nameBuffer);
-            records.emplace_back(name, location, 0, (void*) pc);
+            records.emplace_back(name, location, 0, "", (void*) pc);
         }
 
         if (unw_step(&cursor) < 0)
