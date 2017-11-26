@@ -32,12 +32,14 @@ void TopdownTreeView::displayTask(TaskContext& task)
         size_t totalSamples = task.getCollector().getSamples().size();
         calculator.createTopdownTree(task, *root, [totalSamples](const TopdownTreeCalculator::CallRecord& record) {
             double percent = ((double) record.samples / totalSamples) * 100.0;
+            auto name = record.function.empty() ? "(unknown)" : record.function;
+            auto location = record.location.empty() ? "(unknown)" : record.location;
 
             return std::vector<std::string> {
-                    record.function,
+                    name,
                     std::to_string(record.samples),
                     std::to_string((int) percent),
-                    record.location
+                    location
             };
         });
 
