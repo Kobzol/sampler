@@ -1,4 +1,4 @@
-#### Installation
+#### Dependencies
 `apt install libunwind-dev libdw-dev qtbase5-dev`
 
 #### Build
@@ -10,8 +10,4 @@ make
 ```
 
 #### Run
-`./gui/gui`
-
-
-#### Docker
 `./gui/gui`
