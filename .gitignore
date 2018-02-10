@@ -62,8 +62,3 @@ fabric.properties
 .idea/
 
 # End of https://www.gitignore.io/api/clion+all
-
-profiled
-/main.cpp
-/libs.txt
-/todo.txt

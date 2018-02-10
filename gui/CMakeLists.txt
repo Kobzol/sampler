@@ -9,7 +9,6 @@ set(Qt5_INCLUDE_DIRS
         ${Qt5Gui_INCLUDE_DIRS}
         ${Qt5Widgets_INCLUDE_DIRS}
         ${Qt5Concurrent_INCLUDE_DIRS}
-        ${Qt5Charts_INCLUDE_DIRS}
 )
 set(CMAKE_AUTOMOC ON)
 
