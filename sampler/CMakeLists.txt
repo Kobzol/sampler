@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.4)
-
 project(sampler)
 
 set(SOURCE_FILES
@@ -11,7 +9,9 @@ set(SOURCE_FILES
     taskcontext.cpp
     trace.cpp
     functionrecord.cpp
+    export/exporter.cpp
     export/flamechart-exporter.cpp
+    export/callgrind-exporter.cpp
 )
 
 if (UNIX)
@@ -34,4 +34,4 @@ elseif (WIN32)
     )
 endif()
 
-add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES} export/callgrind-exporter.cpp export/callgrind-exporter.h export/exporter.cpp export/exporter.h)
+add_library(sampler STATIC ${SOURCE_FILES} ${PLATFORM_FILES})

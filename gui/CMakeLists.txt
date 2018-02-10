@@ -4,8 +4,13 @@ project(gui)
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(Qt5 COMPONENTS Core Widgets Concurrent REQUIRED)
-set(Qt5_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS} ${Qt5Gui_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS}
-        ${Qt5Concurrent_INCLUDE_DIRS})
+set(Qt5_INCLUDE_DIRS
+        ${Qt5Core_INCLUDE_DIRS}
+        ${Qt5Gui_INCLUDE_DIRS}
+        ${Qt5Widgets_INCLUDE_DIRS}
+        ${Qt5Concurrent_INCLUDE_DIRS}
+        ${Qt5Charts_INCLUDE_DIRS}
+)
 set(CMAKE_AUTOMOC ON)
 
 set(SOURCE_FILES
@@ -18,6 +23,7 @@ set(SOURCE_FILES
         components/common/tree/TreeItem.cpp
         components/trace/topdown/TopdownTreeView.cpp
         components/trace/TraceView.cpp
+        components/trace/topdown/ProgressDelegate.cpp
         components/trace/topdown/TopdownGroupView.cpp
         components/trace/export/ExportView.cpp
         components/settings/SettingsDialog.cpp
@@ -30,7 +36,7 @@ set(SOURCE_FILES
         model/settings/SettingsManager.cpp
         model/statistics/TopdownTreeCalculator.cpp
         utility/Utility.cpp
-        components/trace/topdown/ProgressDelegate.cpp components/trace/topdown/ProgressDelegate.h)
+)
 
 add_executable(gui ${SOURCE_FILES})
 target_link_libraries(gui sampler Qt5::Widgets Qt5::Concurrent ${PLATFORM_LIBS})
